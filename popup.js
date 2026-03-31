@@ -7,25 +7,37 @@ document.getElementById("baixar").addEventListener("click", () => {
   status.textContent = "🔍 Buscando vídeo...";
 
   chrome.runtime.sendMessage("getVideos", (videos) => {
-    const ts = videos.find(v => v.includes(".ts"));
 
-    if (!ts) {
-      status.textContent = "❌ Nenhum vídeo encontrado";
+    // 🔥 filtra só TS
+    let tsList = videos.filter(v => v.includes(".ts"));
+
+    // remove duplicados
+    tsList = [...new Set(tsList)];
+
+    if (!tsList.length) {
+      status.textContent = "❌ Nenhum TS encontrado";
       return;
     }
 
-    status.textContent = "🚀 Enviando pro servidor...";
+    console.log("🎯 TOTAL TS:", tsList.length);
+
+    // 🔥 ordena pelos números (caso tenha)
+    tsList.sort((a, b) => {
+      const n1 = parseInt(a.match(/\d+/)?.[0] || 0);
+      const n2 = parseInt(b.match(/\d+/)?.[0] || 0);
+      return n1 - n2;
+    });
+
+    status.textContent = `🚀 Enviando ${tsList.length} partes...`;
 
     fetch(`${API}/download`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ tsUrl: ts })
+      body: JSON.stringify({ segments: tsList })
     })
-    .then(() => {
-      acompanhar();
-    })
+    .then(() => acompanhar())
     .catch(err => {
       console.log("ERRO:", err);
       status.textContent = "❌ Erro ao iniciar";
@@ -42,7 +54,7 @@ function acompanhar() {
       if (data.status === "downloading") {
         const percent = (data.downloaded / data.total) * 100;
         bar.style.width = percent + "%";
-        status.textContent = `📥 ${data.downloaded} arquivos`;
+        status.textContent = `📥 ${data.downloaded}/${data.total}`;
       }
 
       if (data.status === "processing") {
@@ -54,7 +66,6 @@ function acompanhar() {
         bar.style.width = "100%";
         clearInterval(interval);
 
-        // 🔥 BAIXA AUTOMÁTICO
         chrome.downloads.download({
           url: `${API}/video`,
           filename: "vsl.mp4"
