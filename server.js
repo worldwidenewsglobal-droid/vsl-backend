@@ -1,17 +1,15 @@
-const path = require("path");
-const DOWNLOADS_DIR = "C:\\Users\\diasi\\Downloads";
-const HISTORY_FILE = "history.json";
 const express = require("express");
 const fs = require("fs");
 const https = require("https");
 const { exec } = require("child_process");
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 let progress = {
   total: 0,
@@ -22,10 +20,12 @@ let progress = {
 app.post("/download", async (req, res) => {
   const { tsUrl } = req.body;
 
-  if (!tsUrl) return res.status(400).send("Erro");
+  if (!tsUrl) return res.status(400).send("Erro: tsUrl não enviado");
 
   const base = tsUrl.substring(0, tsUrl.lastIndexOf("/") + 1);
+  const outputFile = path.join(__dirname, "video.mp4");
 
+  // limpa pasta antiga
   if (fs.existsSync("segments")) {
     fs.rmSync("segments", { recursive: true, force: true });
   }
@@ -48,7 +48,9 @@ app.post("/download", async (req, res) => {
       const filePath = `segments/segment_${index}.ts`;
 
       https.get(url, (res) => {
-        if (res.statusCode !== 200) return resolve(false);
+        if (res.statusCode !== 200) {
+          return resolve(false);
+        }
 
         const file = fs.createWriteStream(filePath);
         res.pipe(file);
@@ -72,6 +74,7 @@ app.post("/download", async (req, res) => {
     }
   }
 
+  // workers paralelos
   const workers = [];
   for (let i = 0; i < CONCURRENCY; i++) {
     workers.push(worker());
@@ -80,6 +83,8 @@ app.post("/download", async (req, res) => {
   await Promise.all(workers);
 
   progress.status = "processing";
+
+  console.log("📄 Gerando lista...");
 
   const files = fs.readdirSync("segments")
     .filter(f => f.endsWith(".ts"))
@@ -92,20 +97,41 @@ app.post("/download", async (req, res) => {
   const lista = files.map(f => `file '${f}'`).join("\n");
   fs.writeFileSync("segments/lista.txt", lista);
 
-  const ffmpegPath = `"C:\\Users\\diasi\\OneDrive\\Área de Trabalho\\Vturb\\ffmpeg-2026-03-30-git-e54e117998-full_build\\bin\\ffmpeg.exe"`;
+  console.log("🎬 Rodando ffmpeg...");
 
-  exec(`${ffmpegPath} -f concat -safe 0 -i segments/lista.txt -c copy video.mp4 && start "" video.mp4`, () => {
+  exec(`ffmpeg -f concat -safe 0 -i segments/lista.txt -c copy "${outputFile}"`, (err) => {
+    if (err) {
+      console.log("❌ ERRO FFMPEG:", err);
+      progress.status = "error";
+      return;
+    }
+
     progress.status = "finished";
     console.log("🔥 VIDEO PRONTO!");
   });
 
-  res.send("ok");
+  res.send("Download iniciado 🚀");
 });
 
 app.get("/progress", (req, res) => {
   res.json(progress);
 });
 
+app.get("/video", (req, res) => {
+  const filePath = path.join(__dirname, "video.mp4");
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("Video não encontrado");
+  }
+
+  res.download(filePath);
+});
+
+// rota raiz (opcional)
+app.get("/", (req, res) => {
+  res.send("🔥 VSL Backend rodando!");
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server rodando em http://localhost:${PORT}`);
+  console.log(`🚀 Server rodando na porta ${PORT}`);
 });
