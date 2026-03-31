@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "VSL Downloader PRO",
+  "version": "2.0",
+  "permissions": ["webRequest", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

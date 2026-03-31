@@ -1,0 +1,4 @@
+node_modules/
+segments/
+ffmpeg-*/
+*.mp4
