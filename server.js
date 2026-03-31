@@ -65,14 +65,21 @@ app.post("/download", async (req, res) => {
   }
 
   async function worker() {
-    while (true) {
-      const i = current++;
-      if (i > MAX) break;
+  let fails = 0;
 
-      const ok = await download(i);
-      if (!ok) break;
+  while (fails < 20) {
+    const i = current++;
+    const ok = await download(i);
+
+    if (!ok) {
+      fails++;
+    } else {
+      fails = 0;
     }
   }
+
+  console.log("✅ TOTAL REAL:", progress.downloaded);
+}
 
   // workers paralelos
   const workers = [];
