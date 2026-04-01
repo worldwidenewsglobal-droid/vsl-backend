@@ -1,63 +1,32 @@
-function safeSend(video) {
-  try {
-    chrome.runtime.sendMessage({
-      type: "VIDEO_FOUND",
-      video
-    });
-  } catch (e) {}
-}
+// content.js
 
-// =========================
-// FETCH (VTURB PRINCIPAL)
-// =========================
+(function () {
 
-const originalFetch = window.fetch;
+  console.log("🚀 Loader iniciado");
 
-window.fetch = async (...args) => {
-  const res = await originalFetch(...args);
+  const scripts = [];
 
-  try {
-    const url = args[0];
+  // =========================
+  // DETECTAR VTURB
+  // =========================
 
-    if (typeof url === "string") {
+  if (document.documentElement.innerHTML.includes(".m3u8") ||
+      document.documentElement.innerHTML.includes("segment")) {
 
-      if (url.includes(".m3u8")) {
-        safeSend({ url, type: "hls" });
-      }
+    scripts.push("players/vturb.js");
+  }
 
-      if (url.includes(".ts") && url.includes("segment")) {
-        safeSend({ url, type: "ts" });
-      }
-    }
+  // =========================
+  // INJETAR SCRIPTS
+  // =========================
 
-  } catch (e) {}
+  scripts.forEach(src => {
 
-  return res;
-};
+    const s = document.createElement("script");
+    s.src = chrome.runtime.getURL(src);
+    s.onload = () => s.remove();
 
-// =========================
-// XHR (fallback)
-// =========================
-
-const open = XMLHttpRequest.prototype.open;
-
-XMLHttpRequest.prototype.open = function () {
-
-  this.addEventListener("load", function () {
-
-    const url = this.responseURL;
-
-    if (!url) return;
-
-    if (url.includes(".m3u8")) {
-      safeSend({ url, type: "hls" });
-    }
-
-    if (url.includes(".ts") && url.includes("segment")) {
-      safeSend({ url, type: "ts" });
-    }
-
+    (document.head || document.documentElement).appendChild(s);
   });
 
-  open.apply(this, arguments);
-};
+})();
