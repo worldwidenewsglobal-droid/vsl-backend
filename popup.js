@@ -6,9 +6,14 @@ const API = "https://vsl-backend.onrender.com";
 chrome.runtime.sendMessage("getVideos", (videos) => {
 
   if (!videos || !videos.length) {
-    empty.style.display = "block";
-    return;
-  }
+  empty.innerHTML = `
+    😴<br><br>
+    Nenhum vídeo encontrado<br>
+    <small>Reproduza o vídeo</small>
+  `;
+  empty.style.display = "block";
+  return;
+}
 
   empty.style.display = "none";
 
@@ -68,14 +73,17 @@ function baixar(video, index) {
 
   status.textContent = "Iniciando...";
 
-  if (video.type === "mp4" || video.type === "webm") {
-    chrome.downloads.download({
+  fetch(`${API}/download`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
       url: video.url,
-      filename: "video.mp4"
-    });
-    status.textContent = "Baixado";
-    return;
-  }
+      type: video.type === "ts" ? "ts-group" : video.type
+    })
+  }).then(() => acompanhar(index));
+}
 
   const route =
     video.type === "ts"
