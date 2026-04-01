@@ -1,7 +1,14 @@
+const API = "https://SEU-RENDER.onrender.com";
+
 const list = document.getElementById("list");
 const empty = document.getElementById("empty");
 
+// =========================
+// LOAD
+// =========================
+
 function loadVideos() {
+
   chrome.runtime.sendMessage("getVideos", (videos) => {
 
     if (!videos || !videos.length) {
@@ -12,41 +19,13 @@ function loadVideos() {
 
     empty.style.display = "none";
 
-    const grouped = {};
-
-    videos.forEach(v => {
-
-      if (v.type === "ts-base") {
-
-        if (!grouped[v.url]) {
-          grouped[v.url] = {
-            url: v.url + "segment_0.ts",
-            type: "ts-group",
-            label: "🎬 VTurb (TS Completo)"
-          };
-        }
-
-      }
-
-      else if (v.type === "hls") {
-        grouped[v.url] = {
-          ...v,
-          label: "🎬 M3U8 (Completo)"
-        };
-      }
-
-      else if (v.type === "mp4") {
-        grouped[v.url] = {
-          ...v,
-          label: "🎬 MP4 Direto"
-        };
-      }
-
-    });
-
-    render(Object.values(grouped));
+    render(videos);
   });
 }
+
+// =========================
+// RENDER
+// =========================
 
 function render(videos) {
 
@@ -58,13 +37,63 @@ function render(videos) {
     el.className = "card";
 
     el.innerHTML = `
-      <div>${video.label}</div>
+      <div>${video.type.toUpperCase()}</div>
       <button>Baixar</button>
     `;
+
+    el.querySelector("button").onclick = () => baixar(video);
 
     list.appendChild(el);
   });
 }
+
+// =========================
+// DOWNLOAD
+// =========================
+
+function baixar(video) {
+
+  fetch(`${API}/download`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      url: video.url,
+      type: video.type
+    })
+  });
+
+  acompanhar();
+}
+
+// =========================
+// PROGRESS
+// =========================
+
+function acompanhar() {
+
+  const interval = setInterval(async () => {
+
+    const res = await fetch(`${API}/progress`);
+    const data = await res.json();
+
+    console.log("📊", data);
+
+    if (data.status === "finished") {
+
+      chrome.downloads.download({
+        url: `${API}/video`,
+        filename: "video.mp4"
+      });
+
+      clearInterval(interval);
+    }
+
+  }, 1500);
+}
+
+// =========================
 
 document.getElementById("reload").onclick = async () => {
 
@@ -75,4 +104,6 @@ document.getElementById("reload").onclick = async () => {
   chrome.tabs.reload(tab.id);
 };
 
-setInterval(loadVideos, 2000);
+// =========================
+
+setInterval(loadVideos, 1500);

@@ -16,7 +16,7 @@ function addVideo(tabId, video) {
 }
 
 // =========================
-// RECEBE DO CONTENT
+// MESSAGES
 // =========================
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -24,42 +24,41 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   const tabId = sender.tab?.id;
   if (!tabId) return;
 
-  if (msg.type === "VIDEO_FOUND") {
-
-    const url = msg.video.url;
-
-    // MP4
-    if (url.includes(".mp4")) {
-      addVideo(tabId, { url, type: "mp4" });
-    }
-
-    // M3U8
-    else if (url.includes(".m3u8")) {
-      addVideo(tabId, { url, type: "hls" });
-    }
-
-    // TS (VTurb)
-    else if (url.includes(".ts")) {
-
-      const base = url.split("segment_")[0];
-
-      addVideo(tabId, {
-        url: base,
-        type: "ts-base"
-      });
-
-    }
-
+  // VTURB TS BASE
+  if (msg.type === "VTURB_FOUND") {
+    addVideo(tabId, {
+      url: msg.data.base,
+      type: "ts-group"
+    });
   }
 
+  // M3U8
+  if (msg.type === "M3U8_FOUND") {
+    addVideo(tabId, {
+      url: msg.url,
+      type: "hls"
+    });
+  }
+
+  // MP4
+  if (msg.type === "MP4_FOUND") {
+    addVideo(tabId, {
+      url: msg.url,
+      type: "mp4"
+    });
+  }
+
+  // GET
   if (msg === "getVideos") {
     sendResponse(videosByTab[tabId] || []);
   }
 
+  // CLEAR
   if (msg === "clearVideos") {
     videosByTab[tabId] = [];
     sendResponse(true);
   }
+
 });
 
 // =========================

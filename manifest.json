@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
   "name": "VSL Downloader PRO",
-  "version": "6.0",
+  "version": "7.0",
 
   "permissions": [
     "activeTab",
     "scripting",
     "sidePanel",
-    "webRequest"
+    "downloads"
   ],
 
   "host_permissions": ["<all_urls>"],
@@ -39,13 +39,6 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_start"
-    }
-  ],
-
-  "web_accessible_resources": [
-    {
-      "resources": ["inject.js"],
-      "matches": ["<all_urls>"]
     }
   ]
 }

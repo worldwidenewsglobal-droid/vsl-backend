@@ -1,23 +1,63 @@
-// injeta script real na página
+(function () {
 
-const script = document.createElement("script");
-script.src = chrome.runtime.getURL("inject.js");
-script.onload = () => script.remove();
+  console.log("🔥 VSL DETECTOR ATIVO");
 
-(document.head || document.documentElement).appendChild(script);
+  let sentBase = false;
 
-// escuta dados do inject
-window.addEventListener("message", (event) => {
+  const observer = new PerformanceObserver((list) => {
 
-  if (event.data?.source === "vsl-extension") {
+    list.getEntries().forEach((entry) => {
 
-    chrome.runtime.sendMessage({
-      type: "VIDEO_FOUND",
-      video: {
-        url: event.data.url
+      const url = entry.name;
+
+      // =========================
+      // VTURB TS
+      // =========================
+
+      if (url.includes(".ts") && url.includes("segment") && !sentBase) {
+
+        const base = url.split("segment_")[0];
+
+        console.log("🎯 VTURB BASE:", base);
+
+        chrome.runtime.sendMessage({
+          type: "VTURB_FOUND",
+          data: { base }
+        });
+
+        sentBase = true;
       }
+
+      // =========================
+      // M3U8
+      // =========================
+
+      if (url.includes(".m3u8")) {
+
+        chrome.runtime.sendMessage({
+          type: "M3U8_FOUND",
+          url
+        });
+
+      }
+
+      // =========================
+      // MP4
+      // =========================
+
+      if (url.includes(".mp4")) {
+
+        chrome.runtime.sendMessage({
+          type: "MP4_FOUND",
+          url
+        });
+
+      }
+
     });
 
-  }
+  });
 
-});
+  observer.observe({ entryTypes: ["resource"] });
+
+})();
