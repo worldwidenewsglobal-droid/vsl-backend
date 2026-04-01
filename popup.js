@@ -1,72 +1,143 @@
-const status = document.getElementById("status");
-const bar = document.getElementById("progress");
+const list = document.getElementById("list");
+const empty = document.getElementById("empty");
 
 const API = "https://vsl-backend.onrender.com";
 
-document.getElementById("baixar").addEventListener("click", () => {
-  status.textContent = "🔍 Buscando vídeo...";
+chrome.runtime.sendMessage("getVideos", (videos) => {
 
-  chrome.runtime.sendMessage("getVideos", (videos) => {
+  if (!videos || !videos.length) {
+    empty.style.display = "block";
+    return;
+  }
 
-    const ts = videos.find(v => v.includes(".ts"));
+  empty.style.display = "none";
 
-    if (!ts) {
-      status.textContent = "❌ Nenhum TS encontrado";
-      return;
-    }
+  const unique = [...new Map(videos.map(v => [v.url, v])).values()];
 
-    console.log("🎯 TS base:", ts);
+  unique.forEach((video, index) => {
+    const card = document.createElement("div");
+    card.className = "card";
 
-    status.textContent = "🚀 Iniciando download...";
+    const title = video.url.split("/").pop().slice(0, 40);
 
-    fetch(`${API}/download`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ tsUrl: ts })
-    })
-    .then(() => acompanhar())
-    .catch(err => {
-      console.log("ERRO:", err);
-      status.textContent = "❌ Erro ao iniciar";
-    });
+    const quality = detectQuality(video.url);
+
+    card.innerHTML = `
+      <div class="video-title">${title}</div>
+
+      <div class="tags">
+        <span class="tag">${video.type.toUpperCase()}</span>
+        ${quality ? `<span class="tag quality">${quality}</span>` : ""}
+      </div>
+
+      <div class="actions">
+        <button id="btn-${index}">⬇️ Baixar</button>
+        <span id="status-${index}" style="font-size:11px;opacity:0.6"></span>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress" id="progress-${index}"></div>
+      </div>
+    `;
+
+    list.appendChild(card);
+
+    document.getElementById(`btn-${index}`).onclick = () => baixar(video, index);
   });
 });
 
-function acompanhar() {
+// =========================
+// 🎯 DETECTAR QUALIDADE
+// =========================
+
+function detectQuality(url) {
+  if (url.includes("1080")) return "1080p";
+  if (url.includes("720")) return "720p";
+  if (url.includes("480")) return "480p";
+  if (url.includes("360")) return "360p";
+  return null;
+}
+
+// =========================
+// 🚀 DOWNLOAD
+// =========================
+
+function baixar(video, index) {
+  const status = document.getElementById(`status-${index}`);
+  const bar = document.getElementById(`progress-${index}`);
+
+  status.textContent = "Iniciando...";
+
+  if (video.type === "mp4" || video.type === "webm") {
+    chrome.downloads.download({
+      url: video.url,
+      filename: "video.mp4"
+    });
+    status.textContent = "Baixado";
+    return;
+  }
+
+  const route =
+    video.type === "ts"
+      ? "download-ts"
+      : video.type === "hls"
+      ? "download-hls"
+      : null;
+
+  fetch(`${API}/${route}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body:
+      video.type === "ts"
+        ? JSON.stringify({ tsUrl: video.url })
+        : JSON.stringify({ m3u8Url: video.url })
+  }).then(() => acompanhar(index));
+}
+
+// =========================
+// 📊 PROGRESS
+// =========================
+
+function acompanhar(index) {
+  const status = document.getElementById(`status-${index}`);
+  const bar = document.getElementById(`progress-${index}`);
+
   const interval = setInterval(async () => {
     try {
       const res = await fetch(`${API}/progress`);
       const data = await res.json();
 
       if (data.status === "downloading") {
-        bar.style.width = "50%";
-        status.textContent = `📥 Baixando ${data.downloaded}`;
+        const percent = (data.downloaded / data.total) * 100;
+        bar.style.width = percent + "%";
+        status.textContent = `Baixando ${Math.floor(percent)}%`;
       }
 
       if (data.status === "processing") {
-        status.textContent = "🎬 Montando vídeo...";
+        status.textContent = "Montando...";
       }
 
       if (data.status === "finished") {
-        status.textContent = "✅ Vídeo pronto!";
+        status.textContent = "Finalizado";
         bar.style.width = "100%";
-        clearInterval(interval);
 
         chrome.downloads.download({
           url: `${API}/video`,
           filename: "vsl.mp4"
         });
+
+        clearInterval(interval);
       }
 
       if (data.status === "error") {
-        status.textContent = "❌ Erro no processamento";
+        status.textContent = "Erro";
         clearInterval(interval);
       }
 
     } catch (err) {
-      console.log("Erro progress:", err);
+      console.log(err);
     }
   }, 1500);
 }

@@ -5,55 +5,139 @@
 
 <style>
 body {
-  font-family: Arial;
-  background: #0f0f0f;
-  color: white;
-  padding: 15px;
-  width: 300px;
+  font-family: 'Segoe UI', sans-serif;
+  background: #0b0f17;
+  color: #fff;
+  padding: 12px;
+  width: 340px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.badge-pro {
+  background: linear-gradient(90deg,#00ff88,#00ccff);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+#list {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.card {
+  background: linear-gradient(145deg,#121826,#0e1420);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 0 10px rgba(0,255,150,0.08);
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.02);
+}
+
+.video-title {
+  font-size: 13px;
+  margin-bottom: 6px;
+  opacity: 0.9;
+}
+
+.tags {
+  margin-bottom: 6px;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  margin-right: 5px;
+  background: #1f2a3a;
+}
+
+.tag.quality {
+  background: #00ccff;
+  color: #000;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 button {
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(90deg, #00ff88, #00ccff);
+  background: linear-gradient(90deg,#00ff88,#00ccff);
   border: none;
+  padding: 6px 10px;
   border-radius: 8px;
-  font-weight: bold;
+  font-size: 12px;
   cursor: pointer;
+  font-weight: bold;
 }
 
-#status {
-  margin-top: 10px;
-  font-size: 13px;
-}
-
-.bar {
-  height: 8px;
-  background: #333;
+.progress-bar {
+  height: 5px;
+  background: #1a2333;
   border-radius: 5px;
-  margin-top: 10px;
+  margin-top: 6px;
+  overflow: hidden;
 }
 
 .progress {
-  height: 8px;
-  background: #00ff88;
+  height: 5px;
   width: 0%;
-  border-radius: 5px;
+  background: linear-gradient(90deg,#00ff88,#00ccff);
+  transition: width 0.3s;
+}
+
+.empty {
+  text-align: center;
+  opacity: 0.5;
+  margin-top: 20px;
 }
 </style>
 </head>
 
 <body>
 
-<h3>🎥 VSL Downloader</h3>
-
-<button id="baixar">⬇️ Baixar VSL</button>
-
-<div id="status">Aguardando clique...</div>
-
-<div class="bar">
-  <div class="progress" id="progress"></div>
+<div class="header">
+  <div class="left">
+    <img src="icons/icon32.png" class="logo">
+    <div class="title">VSL Downloader</div>
+  </div>
+  <div class="badge-pro">PRO</div>
 </div>
+
+<div id="list"></div>
+
+<div id="empty" class="empty">Nenhum vídeo detectado</div>
 
 <script src="popup.js"></script>
 
