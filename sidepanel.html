@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #0b0f17;
+  color: #fff;
+  padding: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  width: 26px;
+  border-radius: 6px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#list {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.card {
+  background: linear-gradient(145deg,#121826,#0e1420);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.02);
+}
+
+.video-title {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  margin-right: 6px;
+  background: #1f2a3a;
+}
+
+.quality {
+  background: #00ccff;
+  color: black;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+button {
+  background: linear-gradient(90deg,#00ff88,#00ccff);
+  border: none;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #1a2333;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.progress {
+  height: 6px;
+  width: 0%;
+  background: linear-gradient(90deg,#00ff88,#00ccff);
+  border-radius: 6px;
+}
+
+.empty {
+  text-align: center;
+  opacity: 0.5;
+  margin-top: 30px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="left">
+    <img src="icons/icon32.png" class="logo">
+    <div class="title">VSL Downloader</div>
+  </div>
+</div>
+
+<div id="list"></div>
+
+<div id="empty" class="empty">Nenhum vídeo detectado</div>
+
+<script src="sidepanel.js"></script>
+
+</body>
+</html>
