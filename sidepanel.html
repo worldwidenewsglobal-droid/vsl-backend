@@ -11,6 +11,15 @@ body {
   padding: 16px;
 }
 
+/* SCROLL PREMIUM */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(#00ff88,#00ccff);
+  border-radius: 10px;
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -44,16 +53,15 @@ body {
   border-radius: 14px;
   padding: 12px;
   margin-bottom: 12px;
-  transition: 0.2s;
 }
 
-.card:hover {
-  transform: scale(1.02);
-}
-
-.video-title {
-  font-size: 14px;
-  margin-bottom: 6px;
+.thumb {
+  width: 100%;
+  height: 120px;
+  background: #111;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  object-fit: cover;
 }
 
 .tag {
@@ -117,7 +125,6 @@ button {
 </div>
 
 <div id="list"></div>
-
 <div id="empty" class="empty">Nenhum vídeo detectado</div>
 
 <script src="sidepanel.js"></script>

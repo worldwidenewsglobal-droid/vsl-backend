@@ -15,13 +15,14 @@ chrome.webRequest.onCompleted.addListener(
         type: getType(url)
       };
 
-      videos.push(video);
+      // evita duplicados
+      if (!videos.find(v => v.url === url)) {
+        videos.push(video);
+        console.log("🎯 Detectado:", url);
+      }
 
-      console.log("🎯 Detectado:", url);
-
-      // 🔥 abre sidepanel automaticamente
+      // abre automaticamente
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-
       if (tabs[0]) {
         chrome.sidePanel.open({ tabId: tabs[0].id });
       }
@@ -37,6 +38,11 @@ function getType(url) {
   if (url.includes(".webm")) return "webm";
   return "unknown";
 }
+
+// abrir ao clicar
+chrome.action.onClicked.addListener(async (tab) => {
+  await chrome.sidePanel.open({ tabId: tab.id });
+});
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg === "getVideos") {
