@@ -12,12 +12,11 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
 
   empty.style.display = "none";
 
-  // 🔥 AGRUPAR TS
   const grouped = {};
 
   videos.forEach(v => {
     if (v.type === "ts") {
-      const base = v.url.split("segment_")[0];
+      const base = v.url.replace(/segment_\d+\.ts.*/, "");
 
       if (!grouped[base]) {
         grouped[base] = {
@@ -33,29 +32,35 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
     }
   });
 
-  const finalList = Object.values(grouped);
+  let finalList = Object.values(grouped);
+
+  // ordenar bonito
+  finalList.sort((a, b) => {
+    const order = { mp4: 1, hls: 2, "ts-group": 3 };
+    return order[a.type] - order[b.type];
+  });
 
   finalList.forEach((video, index) => {
+    const quality = detectQuality(video.url);
+
     const card = document.createElement("div");
     card.className = "card";
 
-    const title = formatName(video.url);
-    const quality = detectQuality(video.url);
-
     card.innerHTML = `
-      <img class="thumb" src="${getThumbnail(video.url)}">
+      <img class="thumb" src="assets/thumb.png">
 
-      <div>${video.type === "ts-group" ? `Stream (${video.count} partes)` : title}</div>
+      <div>
+        ${video.type === "ts-group"
+          ? `Stream (${video.count} partes)`
+          : formatName(video.url)}
+      </div>
 
       <div>
         <span class="tag">${video.type}</span>
         ${quality ? `<span class="tag quality">${quality}</span>` : ""}
       </div>
 
-      <div class="actions">
-        <button id="btn-${index}">⬇️ Baixar</button>
-        <span id="status-${index}"></span>
-      </div>
+      <button id="btn-${index}">⬇️ Baixar</button>
 
       <div class="progress-bar">
         <div class="progress" id="progress-${index}"></div>
@@ -71,7 +76,7 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
 // =========================
 
 function formatName(url) {
-  return url.split("/").pop().replace(/\.(ts|m3u8|mp4)/, "").slice(0, 30);
+  return url.split("/").pop().replace(/\.(ts|m3u8|mp4)/, "");
 }
 
 function detectQuality(url) {
@@ -82,17 +87,10 @@ function detectQuality(url) {
   return null;
 }
 
-function getThumbnail() {
-  return "https://via.placeholder.com/300x150/0b0f17/00ffcc?text=VIDEO";
-}
-
 // =========================
 
 function baixar(video, index) {
-  const status = document.getElementById(`status-${index}`);
   const bar = document.getElementById(`progress-${index}`);
-
-  status.textContent = "Iniciando...";
 
   const route =
     video.type === "ts-group"
@@ -118,7 +116,6 @@ function baixar(video, index) {
 // =========================
 
 function acompanhar(index) {
-  const status = document.getElementById(`status-${index}`);
   const bar = document.getElementById(`progress-${index}`);
 
   const interval = setInterval(async () => {
@@ -128,15 +125,9 @@ function acompanhar(index) {
     if (data.status === "downloading") {
       const percent = (data.downloaded / data.total) * 100;
       bar.style.width = percent + "%";
-      status.textContent = Math.floor(percent) + "%";
-    }
-
-    if (data.status === "processing") {
-      status.textContent = "Processando...";
     }
 
     if (data.status === "finished") {
-      status.textContent = "Finalizado";
       bar.style.width = "100%";
 
       chrome.downloads.download({
@@ -144,11 +135,6 @@ function acompanhar(index) {
         filename: "video.mp4"
       });
 
-      clearInterval(interval);
-    }
-
-    if (data.status === "error") {
-      status.textContent = "Erro";
       clearInterval(interval);
     }
   }, 1500);

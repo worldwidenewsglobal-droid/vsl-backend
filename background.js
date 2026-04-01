@@ -5,23 +5,28 @@ chrome.webRequest.onCompleted.addListener(
     const url = details.url;
 
     if (
-      url.includes(".m3u8") ||
-      url.includes(".mp4") ||
-      url.includes(".ts") ||
-      url.includes(".webm")
+      (
+        url.includes(".m3u8") ||
+        url.includes(".mp4") ||
+        url.includes(".webm") ||
+        url.includes(".ts")
+      ) &&
+      !url.includes("blob:") &&
+      !url.includes("data:") &&
+      !url.includes("init") &&
+      !url.includes("sprite") &&
+      !url.includes("preview")
     ) {
       const video = {
         url,
         type: getType(url)
       };
 
-      // evita duplicados
       if (!videos.find(v => v.url === url)) {
         videos.push(video);
         console.log("🎯 Detectado:", url);
       }
 
-      // abre automaticamente
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tabs[0]) {
         chrome.sidePanel.open({ tabId: tabs[0].id });
@@ -45,10 +50,7 @@ chrome.action.onClicked.addListener(async (tab) => {
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg === "getVideos") {
-    sendResponse(videos);
-  }
-
+  if (msg === "getVideos") sendResponse(videos);
   if (msg === "clear") {
     videos = [];
     sendResponse(true);
