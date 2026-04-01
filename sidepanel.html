@@ -5,13 +5,12 @@
 
 <style>
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Segoe UI';
   background: #0b0f17;
   color: #fff;
   padding: 14px;
 }
 
-/* SCROLL */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(#00ff88,#00ccff);
@@ -26,45 +25,28 @@ body {
 }
 
 .logo { width: 26px; border-radius: 6px; }
-.title { font-size: 18px; font-weight: bold; }
 
-#list {
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-/* CARD */
 .card {
   background: linear-gradient(145deg,#121826,#0e1420);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   display: flex;
   gap: 10px;
-  align-items: center;
 }
 
-/* THUMB */
 .thumb {
-  width: 90px;
-  height: 60px;
-  border-radius: 8px;
+  width: 80px;
+  height: 55px;
   object-fit: cover;
+  border-radius: 6px;
 }
 
-/* INFO */
-.info {
-  flex: 1;
-}
+.info { flex: 1; }
 
 .name {
   font-size: 13px;
   margin-bottom: 4px;
-}
-
-.tags {
-  display: flex;
-  gap: 6px;
 }
 
 .tag {
@@ -77,33 +59,23 @@ body {
 .quality {
   background: #00ccff;
   color: black;
+  margin-left: 5px;
 }
 
-/* RIGHT SIDE */
 .right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 5px;
 }
 
-.format {
-  font-size: 10px;
-  opacity: 0.7;
-}
-
-/* BUTTON */
 button {
   background: linear-gradient(90deg,#00ff88,#00ccff);
   border: none;
-  padding: 6px 10px;
-  border-radius: 7px;
-  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
 }
 
-/* PROGRESS */
 .progress-bar {
   height: 4px;
   background: #1a2333;
@@ -116,12 +88,6 @@ button {
   width: 0%;
   background: linear-gradient(90deg,#00ff88,#00ccff);
 }
-
-.empty {
-  text-align: center;
-  opacity: 0.5;
-  margin-top: 30px;
-}
 </style>
 </head>
 
@@ -129,11 +95,10 @@ button {
 
 <div class="header">
   <img src="icons/icon32.png" class="logo">
-  <div class="title">VSL Downloader</div>
+  <b>VSL Downloader</b>
 </div>
 
 <div id="list"></div>
-<div id="empty" class="empty">Nenhum vídeo detectado</div>
 
 <script src="sidepanel.js"></script>
 

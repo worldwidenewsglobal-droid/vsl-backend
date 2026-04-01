@@ -1,30 +1,26 @@
 const list = document.getElementById("list");
-const empty = document.getElementById("empty");
-
 const API = "https://vsl-backend.onrender.com";
 
+let downloading = false;
+
 chrome.runtime.sendMessage("getVideos", (videos) => {
-
-  if (!videos || !videos.length) {
-    empty.style.display = "block";
-    return;
-  }
-
-  empty.style.display = "none";
 
   const grouped = {};
 
   videos.forEach(v => {
     if (v.type === "ts") {
 
-      // 🔥 regex forte (resolve bug)
-      const base = v.url.replace(/segment_\d+\.ts.*/, "");
+      const match = v.url.match(/(\/\d{3,4}p\/)/);
+      const qualityKey = match ? match[1] : "default";
+
+      const base = v.url.split(qualityKey)[0] + qualityKey;
 
       if (!grouped[base]) {
         grouped[base] = {
           type: "ts-group",
           url: v.url,
-          count: 0
+          count: 0,
+          quality: detectQuality(v.url)
         };
       }
 
@@ -34,17 +30,9 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
     }
   });
 
-  let finalList = Object.values(grouped);
-
-  // ordem profissional
-  finalList.sort((a, b) => {
-    const order = { mp4: 1, hls: 2, "ts-group": 3 };
-    return order[a.type] - order[b.type];
-  });
+  const finalList = Object.values(grouped);
 
   finalList.forEach((video, index) => {
-
-    const quality = detectQuality(video.url);
 
     const card = document.createElement("div");
     card.className = "card";
@@ -59,8 +47,9 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
             : formatName(video.url)}
         </div>
 
-        <div class="tags">
-          ${quality ? `<span class="tag quality">${quality}</span>` : ""}
+        <div>
+          <span class="tag">${video.type}</span>
+          ${video.quality ? `<span class="tag quality">${video.quality}</span>` : ""}
         </div>
 
         <div class="progress-bar">
@@ -69,7 +58,6 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
       </div>
 
       <div class="right">
-        <div class="format">${video.type}</div>
         <button id="btn-${index}">⬇️</button>
       </div>
     `;
@@ -80,12 +68,6 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
   });
 });
 
-// =========================
-
-function formatName(url) {
-  return url.split("/").pop().replace(/\.(ts|m3u8|mp4)/, "");
-}
-
 function detectQuality(url) {
   if (url.includes("1080")) return "1080p";
   if (url.includes("720")) return "720p";
@@ -94,9 +76,21 @@ function detectQuality(url) {
   return null;
 }
 
+function formatName(url) {
+  return url.split("/").pop().replace(/\.(ts|m3u8|mp4)/, "");
+}
+
 // =========================
 
 function baixar(video, index) {
+
+  if (downloading) {
+    alert("⏳ Aguarde terminar");
+    return;
+  }
+
+  downloading = true;
+
   const bar = document.getElementById(`progress-${index}`);
 
   const route =
@@ -108,9 +102,7 @@ function baixar(video, index) {
 
   fetch(`${API}/${route}`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body:
       video.type === "ts-group"
         ? JSON.stringify({ tsUrl: video.url })
@@ -130,8 +122,11 @@ function acompanhar(index) {
     const data = await res.json();
 
     if (data.status === "downloading") {
-      const percent = (data.downloaded / data.total) * 100;
-      bar.style.width = percent + "%";
+      bar.style.width = ((data.downloaded / data.total) * 100) + "%";
+    }
+
+    if (data.status === "processing") {
+      bar.style.width = "95%";
     }
 
     if (data.status === "finished") {
@@ -142,7 +137,13 @@ function acompanhar(index) {
         filename: "video.mp4"
       });
 
+      downloading = false;
       clearInterval(interval);
     }
-  }, 1500);
+
+    if (data.status === "error") {
+      downloading = false;
+      clearInterval(interval);
+    }
+  }, 1000);
 }

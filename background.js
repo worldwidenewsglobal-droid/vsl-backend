@@ -8,8 +8,8 @@ chrome.webRequest.onCompleted.addListener(
       (
         url.includes(".m3u8") ||
         url.includes(".mp4") ||
-        url.includes(".webm") ||
-        url.includes(".ts")
+        url.includes(".ts") ||
+        url.includes(".webm")
       ) &&
       !url.includes("blob:") &&
       !url.includes("data:") &&
@@ -17,13 +17,13 @@ chrome.webRequest.onCompleted.addListener(
       !url.includes("sprite") &&
       !url.includes("preview")
     ) {
-      const video = {
-        url,
-        type: getType(url)
-      };
 
       if (!videos.find(v => v.url === url)) {
-        videos.push(video);
+        videos.push({
+          url,
+          type: getType(url)
+        });
+
         console.log("🎯 Detectado:", url);
       }
 
@@ -44,7 +44,6 @@ function getType(url) {
   return "unknown";
 }
 
-// abrir ao clicar
 chrome.action.onClicked.addListener(async (tab) => {
   await chrome.sidePanel.open({ tabId: tab.id });
 });

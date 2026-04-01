@@ -1,8 +1,7 @@
 {
   "manifest_version": 3,
   "name": "VSL Downloader PRO",
-  "version": "3.2",
-  "id": "vsl-downloader-pro",
+  "version": "3.3",
 
   "permissions": [
     "webRequest",
