@@ -16,6 +16,8 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
 
   videos.forEach(v => {
     if (v.type === "ts") {
+
+      // 🔥 regex forte (resolve bug)
       const base = v.url.replace(/segment_\d+\.ts.*/, "");
 
       if (!grouped[base]) {
@@ -34,13 +36,14 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
 
   let finalList = Object.values(grouped);
 
-  // ordenar bonito
+  // ordem profissional
   finalList.sort((a, b) => {
     const order = { mp4: 1, hls: 2, "ts-group": 3 };
     return order[a.type] - order[b.type];
   });
 
   finalList.forEach((video, index) => {
+
     const quality = detectQuality(video.url);
 
     const card = document.createElement("div");
@@ -49,21 +52,25 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
     card.innerHTML = `
       <img class="thumb" src="assets/thumb.png">
 
-      <div>
-        ${video.type === "ts-group"
-          ? `Stream (${video.count} partes)`
-          : formatName(video.url)}
+      <div class="info">
+        <div class="name">
+          ${video.type === "ts-group"
+            ? `Stream (${video.count} partes)`
+            : formatName(video.url)}
+        </div>
+
+        <div class="tags">
+          ${quality ? `<span class="tag quality">${quality}</span>` : ""}
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress" id="progress-${index}"></div>
+        </div>
       </div>
 
-      <div>
-        <span class="tag">${video.type}</span>
-        ${quality ? `<span class="tag quality">${quality}</span>` : ""}
-      </div>
-
-      <button id="btn-${index}">⬇️ Baixar</button>
-
-      <div class="progress-bar">
-        <div class="progress" id="progress-${index}"></div>
+      <div class="right">
+        <div class="format">${video.type}</div>
+        <button id="btn-${index}">⬇️</button>
       </div>
     `;
 
