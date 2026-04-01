@@ -1,56 +1,23 @@
-(function () {
+// injeta script real na página
 
-  function send(url) {
-    try {
-      chrome.runtime.sendMessage({
-        type: "VIDEO_FOUND",
-        video: {
-          url,
-          type: "ts"
-        }
-      });
-    } catch (e) {}
-  }
+const script = document.createElement("script");
+script.src = chrome.runtime.getURL("inject.js");
+script.onload = () => script.remove();
 
-  console.log("🔥 VTURB INTERCEPTOR ATIVO");
+(document.head || document.documentElement).appendChild(script);
 
-  // =========================
-  // FETCH INTERCEPT
-  // =========================
+// escuta dados do inject
+window.addEventListener("message", (event) => {
 
-  const originalFetch = window.fetch;
+  if (event.data?.source === "vsl-extension") {
 
-  window.fetch = async (...args) => {
-    const res = await originalFetch(...args);
-
-    try {
-      const url = args[0];
-
-      if (typeof url === "string" && url.includes(".ts")) {
-        send(url);
-      }
-    } catch (e) {}
-
-    return res;
-  };
-
-  // =========================
-  // XHR INTERCEPT
-  // =========================
-
-  const open = XMLHttpRequest.prototype.open;
-
-  XMLHttpRequest.prototype.open = function () {
-
-    this.addEventListener("load", function () {
-      const url = this.responseURL;
-
-      if (url && url.includes(".ts")) {
-        send(url);
+    chrome.runtime.sendMessage({
+      type: "VIDEO_FOUND",
+      video: {
+        url: event.data.url
       }
     });
 
-    open.apply(this, arguments);
-  };
+  }
 
-})();
+});

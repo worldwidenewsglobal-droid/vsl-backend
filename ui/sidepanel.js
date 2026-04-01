@@ -1,12 +1,6 @@
 const list = document.getElementById("list");
 const empty = document.getElementById("empty");
 
-let videosGlobal = [];
-
-// =========================
-// LOAD
-// =========================
-
 function loadVideos() {
   chrome.runtime.sendMessage("getVideos", (videos) => {
 
@@ -20,100 +14,57 @@ function loadVideos() {
 
     const grouped = {};
 
-videos.forEach(v => {
+    videos.forEach(v => {
 
-  // TS BASE (VTURB)
-  if (v.type === "ts-base") {
+      if (v.type === "ts-base") {
 
-    if (!grouped[v.url]) {
-      grouped[v.url] = {
-        url: v.url + "segment_0.ts",
-        type: "ts-group",
-        label: "🎬 Vídeo Completo (VTurb TS)"
-      };
-    }
+        if (!grouped[v.url]) {
+          grouped[v.url] = {
+            url: v.url + "segment_0.ts",
+            type: "ts-group",
+            label: "🎬 VTurb (TS Completo)"
+          };
+        }
 
-  }
+      }
 
-  // M3U8
-  else if (v.type === "hls") {
-    grouped[v.url] = {
-      ...v,
-      label: "🎬 Vídeo Completo (M3U8)"
-    };
-  }
+      else if (v.type === "hls") {
+        grouped[v.url] = {
+          ...v,
+          label: "🎬 M3U8 (Completo)"
+        };
+      }
 
-  // MP4
-  else if (v.type === "mp4") {
-    grouped[v.url] = {
-      ...v,
-      label: "🎬 Vídeo Completo (MP4)"
-    };
-  }
+      else if (v.type === "mp4") {
+        grouped[v.url] = {
+          ...v,
+          label: "🎬 MP4 Direto"
+        };
+      }
 
-});
-
-    const finalList = Object.values(grouped);
-
-    // PRIORIDADE
-    finalList.sort((a, b) => {
-      const order = { mp4: 1, hls: 2, "ts-group": 3 };
-      return order[a.type] - order[b.type];
     });
 
-    videosGlobal = finalList;
-
-    render(finalList);
+    render(Object.values(grouped));
   });
 }
-
-// =========================
-// RENDER
-// =========================
 
 function render(videos) {
 
   list.innerHTML = "";
 
-  videos.forEach((video, index) => {
+  videos.forEach((video) => {
 
-    const card = document.createElement("div");
-    card.className = "card";
+    const el = document.createElement("div");
+    el.className = "card";
 
-    card.innerHTML = `
-      <div class="thumb">▶</div>
-
-      <div class="info">
-        <div class="name">${video.label}</div>
-        <div class="meta">
-          <span class="tag">${video.type}</span>
-        </div>
-      </div>
-
-      <button class="download" id="btn-${index}">
-        ⬇ Baixar
-      </button>
+    el.innerHTML = `
+      <div>${video.label}</div>
+      <button>Baixar</button>
     `;
 
-    list.appendChild(card);
-
-    document.getElementById(`btn-${index}`).onclick = () => {
-      baixar(video);
-    };
+    list.appendChild(el);
   });
 }
-
-// =========================
-// DOWNLOAD
-// =========================
-
-function baixar(video) {
-  alert("Download ainda via backend\nTipo: " + video.type);
-}
-
-// =========================
-// RELOAD
-// =========================
 
 document.getElementById("reload").onclick = async () => {
 
@@ -121,14 +72,7 @@ document.getElementById("reload").onclick = async () => {
 
   await chrome.runtime.sendMessage("clearVideos");
 
-  list.innerHTML = "";
-  empty.innerHTML = "🔄 Recarregue e dê play no vídeo";
-  empty.style.display = "block";
-
   chrome.tabs.reload(tab.id);
 };
 
-// =========================
-
-loadVideos();
-setInterval(loadVideos, 1500);
+setInterval(loadVideos, 2000);
