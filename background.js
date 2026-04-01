@@ -1,56 +1,18 @@
-let videos = [];
+let videosByTab = {};
 
 // =========================
-// 🎯 CAPTURA REQUESTS
+// 🧠 ADD VIDEO POR ABA
 // =========================
 
-chrome.webRequest.onCompleted.addListener(
-  (details) => {
-    const url = details.url;
+function addVideo(tabId, video) {
+  if (!videosByTab[tabId]) videosByTab[tabId] = [];
 
-    if (
-      (
-        url.includes(".m3u8") ||
-        url.includes(".mp4") ||
-        url.includes(".ts")
-      ) &&
-      !url.includes("blob:") &&
-      !url.includes("data:")
-    ) {
-      addVideo(url, getType(url));
-    }
-  },
-  { urls: ["<all_urls>"] }
-);
-
-// =========================
-// 🧠 ADD VIDEO
-// =========================
-
-function addVideo(url, type) {
-  if (!videos.find(v => v.url === url)) {
-    videos.push({ url, type });
-    console.log("🎯 Detectado:", url);
+  const exists = videosByTab[tabId].find(v => v.url === video.url);
+  if (!exists) {
+    videosByTab[tabId].push(video);
+    console.log("🎯", video);
   }
 }
-
-function getType(url) {
-  if (url.includes(".m3u8")) return "hls";
-  if (url.includes(".mp4")) return "mp4";
-  if (url.includes(".ts")) return "ts";
-  return "unknown";
-}
-
-// =========================
-// 🔥 RESET POR NAVEGAÇÃO
-// =========================
-
-chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-  if (changeInfo.status === "loading") {
-    videos = [];
-    console.log("🧹 Reset por troca de página");
-  }
-});
 
 // =========================
 // 🎥 MENSAGENS DO CONTENT
@@ -58,53 +20,81 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
-  if (msg.type === "FOUND_IFRAME") {
+  const tabId = sender.tab?.id;
 
-    // Vimeo embed
-    if (msg.url.includes("vimeo.com")) {
+  if (!tabId) return;
 
-      const match = msg.url.match(/video\/(\d+)/);
+  // =========================
+  // 🎥 VIDEO DETECTADO
+  // =========================
 
-      if (match) {
-        const videoId = match[1];
-
-        fetch(`https://player.vimeo.com/video/${videoId}/config`)
-          .then(res => res.json())
-          .then(data => {
-
-            const files = data?.request?.files?.progressive;
-
-            if (files && files.length) {
-
-              files.forEach(f => {
-                addVideo(f.url, "mp4");
-              });
-
-            } else if (data?.request?.files?.hls?.cdns) {
-
-              const cdn = Object.values(data.request.files.hls.cdns)[0];
-              addVideo(cdn.url, "hls");
-            }
-
-          })
-          .catch(err => console.log("Erro Vimeo:", err));
-      }
-    }
-
-    // fallback iframe normal
-    addVideo(msg.url, "iframe");
+  if (msg.type === "VIDEO_FOUND") {
+    addVideo(tabId, msg.video);
   }
 
-  if (msg === "getVideos") sendResponse(videos);
+  // =========================
+  // 🎥 VIMEO
+  // =========================
+
+  if (msg.type === "VIMEO_ID") {
+
+    fetch(`https://player.vimeo.com/video/${msg.id}/config`)
+      .then(res => res.json())
+      .then(data => {
+
+        const files = data?.request?.files?.progressive;
+
+        if (files) {
+          files.forEach(f => {
+            addVideo(tabId, {
+              url: f.url,
+              type: "mp4",
+              quality: f.quality
+            });
+          });
+        }
+      })
+      .catch(err => console.log("Erro Vimeo:", err));
+  }
+
+  // =========================
+  // 📦 GET VIDEOS
+  // =========================
+
+  if (msg === "getVideos") {
+    sendResponse(videosByTab[tabId] || []);
+  }
+
+  // =========================
+  // 🧹 CLEAR
+  // =========================
 
   if (msg === "clearVideos") {
-    videos = [];
+    videosByTab[tabId] = [];
     sendResponse(true);
   }
 });
 
 // =========================
-// SIDE PANEL
+// 🔥 LIMPAR AO TROCAR ABA
+// =========================
+
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  videosByTab[activeInfo.tabId] = [];
+  console.log("🧹 Reset troca de aba");
+});
+
+// =========================
+// 🔥 LIMPAR AO RECARREGAR
+// =========================
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.status === "loading") {
+    videosByTab[tabId] = [];
+    console.log("🧹 Reset reload");
+  }
+});
+
 // =========================
 
 chrome.action.onClicked.addListener(async (tab) => {

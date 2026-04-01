@@ -172,7 +172,7 @@ document.getElementById("reload").onclick = async () => {
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  chrome.runtime.sendMessage("clearVideos");
+  await chrome.runtime.sendMessage("clearVideos");
 
   list.innerHTML = "";
   empty.innerHTML = "🔄 Recarregando...";
@@ -180,31 +180,11 @@ document.getElementById("reload").onclick = async () => {
 
   chrome.tabs.reload(tab.id);
 
-  chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
-    if (tabId === tab.id && info.status === "complete") {
-
-      chrome.tabs.onUpdated.removeListener(listener);
-
-      setTimeout(() => {
-        chrome.runtime.sendMessage("getVideos", (videos) => {
-
-          if (!videos || !videos.length) {
-            empty.innerHTML = `
-              😴<br><br>
-              Nenhum vídeo encontrado<br>
-              <small>Dê play no vídeo</small>
-            `;
-            empty.style.display = "block";
-            return;
-          }
-
-          empty.style.display = "none";
-          render(videos);
-
-        });
-      }, 2000);
-    }
-  });
+  setTimeout(() => {
+    chrome.runtime.sendMessage("getVideos", (videos) => {
+      render(videos || []);
+    });
+  }, 3000);
 };
 
 // =========================
