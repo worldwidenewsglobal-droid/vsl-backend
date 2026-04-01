@@ -40,7 +40,6 @@ function getType(url) {
   if (url.includes(".m3u8")) return "hls";
   if (url.includes(".mp4")) return "mp4";
   if (url.includes(".ts")) return "ts";
-  if (url.includes(".webm")) return "webm";
   return "unknown";
 }
 
@@ -50,8 +49,4 @@ chrome.action.onClicked.addListener(async (tab) => {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg === "getVideos") sendResponse(videos);
-  if (msg === "clear") {
-    videos = [];
-    sendResponse(true);
-  }
 });
