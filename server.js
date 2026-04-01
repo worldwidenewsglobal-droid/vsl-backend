@@ -7,7 +7,7 @@ const path = require("path");
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "50mb" }));
+app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
@@ -17,41 +17,40 @@ let progress = {
   status: "idle"
 };
 
-// =========================
-// 🚀 DOWNLOAD REAL
-// =========================
-
 app.post("/download", async (req, res) => {
-  const { segments } = req.body;
+  const { tsUrl } = req.body;
 
-  console.log("BODY:", segments?.length);
+  if (!tsUrl) return res.status(400).send("Erro: tsUrl não enviado");
 
-  if (!segments || !segments.length) {
-    return res.status(400).send("Erro: segments não enviado");
-  }
-
-  const outputFile = path.join(__dirname, "video.mp4");
+  const base = tsUrl.substring(0, tsUrl.lastIndexOf("/") + 1);
 
   if (fs.existsSync("segments")) {
     fs.rmSync("segments", { recursive: true, force: true });
   }
   fs.mkdirSync("segments");
 
+  let current = 0;
+  let fails = 0;
+
   progress = {
-    total: segments.length,
+    total: 0,
     downloaded: 0,
     status: "downloading"
   };
 
-  const CONCURRENCY = 20;
-  let current = 0;
+  console.log("🚀 Iniciando brute force...");
 
-  function downloadFile(url, index) {
+  function download(index) {
     return new Promise((resolve) => {
-      https.get(url, (res) => {
-        if (res.statusCode !== 200) return resolve(false);
+      const url = base + `segment_${index}.ts`;
+      const filePath = `segments/${index}.ts`;
 
-        const file = fs.createWriteStream(`segments/${index}.ts`);
+      https.get(url, (res) => {
+        if (res.statusCode !== 200) {
+          return resolve(false);
+        }
+
+        const file = fs.createWriteStream(filePath);
         res.pipe(file);
 
         file.on("finish", () => {
@@ -63,35 +62,29 @@ app.post("/download", async (req, res) => {
     });
   }
 
-  async function worker() {
-    while (true) {
-      const i = current++;
-      if (i >= segments.length) break;
+  while (fails < 200) {
+    const ok = await download(current);
 
-      await downloadFile(segments[i], i);
+    if (!ok) {
+      fails++;
+    } else {
+      fails = 0;
+      current++;
     }
   }
 
-  const workers = [];
-  for (let i = 0; i < CONCURRENCY; i++) {
-    workers.push(worker());
-  }
-
-  await Promise.all(workers);
-
+  progress.total = progress.downloaded;
   progress.status = "processing";
 
   console.log("🎬 Montando vídeo...");
 
-  const lista = segments
-    .map((_, i) => `file '${i}.ts'`)
-    .join("\n");
+  const lista = Array.from({ length: progress.downloaded }, (_, i) => `file '${i}.ts'`).join("\n");
 
   fs.writeFileSync("segments/lista.txt", lista);
 
-  exec(`ffmpeg -f concat -safe 0 -i segments/lista.txt -c copy "${outputFile}"`, (err) => {
+  exec(`ffmpeg -f concat -safe 0 -i segments/lista.txt -c copy video.mp4`, (err) => {
     if (err) {
-      console.log("❌ ERRO FFMPEG:", err);
+      console.log("❌ ERRO:", err);
       progress.status = "error";
       return;
     }
@@ -102,8 +95,6 @@ app.post("/download", async (req, res) => {
 
   res.send("Download iniciado 🚀");
 });
-
-// =========================
 
 app.get("/progress", (req, res) => {
   res.json(progress);
@@ -117,10 +108,6 @@ app.get("/video", (req, res) => {
   }
 
   res.download(filePath);
-});
-
-app.get("/", (req, res) => {
-  res.send("🔥 TS Downloader PRO rodando!");
 });
 
 app.listen(PORT, () => {

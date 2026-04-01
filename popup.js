@@ -4,55 +4,33 @@ const bar = document.getElementById("progress");
 const API = "https://vsl-backend.onrender.com";
 
 document.getElementById("baixar").addEventListener("click", () => {
+  status.textContent = "🔍 Buscando vídeo...";
 
-  status.textContent = "♻️ Preparando captura...";
+  chrome.runtime.sendMessage("getVideos", (videos) => {
 
-  chrome.runtime.sendMessage("startCapture", () => {
+    const ts = videos.find(v => v.includes(".ts"));
 
-    status.textContent = "🔄 Recarregue a página do vídeo AGORA";
+    if (!ts) {
+      status.textContent = "❌ Nenhum TS encontrado";
+      return;
+    }
 
-    // ⏱️ espera capturar os TS depois do reload
-    setTimeout(() => {
+    console.log("🎯 TS base:", ts);
 
-      chrome.runtime.sendMessage("getVideos", (videos) => {
+    status.textContent = "🚀 Iniciando download...";
 
-        let tsList = videos.filter(v => v.includes(".ts"));
-
-        // remove duplicados
-        tsList = [...new Set(tsList)];
-
-        console.log("🎯 TOTAL TS:", tsList.length);
-
-        if (!tsList.length || tsList.length < 50) {
-          status.textContent = "⚠️ Poucos segmentos detectados, recarregue a página";
-          return;
-        }
-
-        // ordena por número
-        tsList.sort((a, b) => {
-          const n1 = parseInt(a.match(/\d+/)?.[0] || 0);
-          const n2 = parseInt(b.match(/\d+/)?.[0] || 0);
-          return n1 - n2;
-        });
-
-        status.textContent = `🚀 Enviando ${tsList.length} partes...`;
-
-        fetch(`${API}/download`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ segments: tsList })
-        })
-        .then(() => acompanhar())
-        .catch(err => {
-          console.log("ERRO:", err);
-          status.textContent = "❌ Erro ao iniciar";
-        });
-
-      });
-
-    }, 8000); // tempo pra carregar os TS
+    fetch(`${API}/download`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ tsUrl: ts })
+    })
+    .then(() => acompanhar())
+    .catch(err => {
+      console.log("ERRO:", err);
+      status.textContent = "❌ Erro ao iniciar";
+    });
   });
 });
 
@@ -63,9 +41,8 @@ function acompanhar() {
       const data = await res.json();
 
       if (data.status === "downloading") {
-        const percent = (data.downloaded / data.total) * 100;
-        bar.style.width = percent + "%";
-        status.textContent = `📥 ${data.downloaded}/${data.total}`;
+        bar.style.width = "50%";
+        status.textContent = `📥 Baixando ${data.downloaded}`;
       }
 
       if (data.status === "processing") {
