@@ -1,14 +1,13 @@
 {
   "manifest_version": 3,
   "name": "VSL Downloader PRO",
-  "version": "4.0",
+  "version": "5.0",
 
   "permissions": [
     "activeTab",
     "scripting",
     "sidePanel",
-    "webRequest",
-    "webRequestBlocking"
+    "webRequest"
   ],
 
   "host_permissions": ["<all_urls>"],

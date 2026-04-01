@@ -8,15 +8,14 @@ function addVideo(tabId, video) {
   if (!videosByTab[tabId]) videosByTab[tabId] = [];
 
   const exists = videosByTab[tabId].find(v => v.url === video.url);
-
   if (!exists) {
     videosByTab[tabId].push(video);
-    console.log("🎯", video.url);
+    console.log("🎯", video);
   }
 }
 
 // =========================
-// 🔥 CAPTURA REAL (IGUAL PUPPETEER)
+// DETECTOR GLOBAL (REDE)
 // =========================
 
 chrome.webRequest.onCompleted.addListener(
@@ -27,17 +26,26 @@ chrome.webRequest.onCompleted.addListener(
 
     if (tabId < 0) return;
 
-    // 🔥 FILTRO VTURB
+    // 🎬 MP4
+    if (url.includes(".mp4")) {
+      addVideo(tabId, { url, type: "mp4" });
+    }
+
+    // 🔥 M3U8 (filtrado)
     if (
-      url.includes(".ts") ||
-      url.includes(".m3u8")
+      url.includes(".m3u8") &&
+      !url.includes("chunk") &&
+      !url.includes("frag")
     ) {
+      addVideo(tabId, { url, type: "hls" });
+    }
 
-      addVideo(tabId, {
-        url,
-        type: url.includes(".m3u8") ? "hls" : "ts"
-      });
-
+    // ⚙ TS (VTurb)
+    if (
+      url.includes(".ts") &&
+      url.includes("segment")
+    ) {
+      addVideo(tabId, { url, type: "ts" });
     }
 
   },
@@ -51,7 +59,6 @@ chrome.webRequest.onCompleted.addListener(
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   const tabId = sender.tab?.id;
-
   if (!tabId) return;
 
   if (msg === "getVideos") {

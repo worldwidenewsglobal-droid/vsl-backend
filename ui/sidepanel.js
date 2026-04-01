@@ -4,7 +4,7 @@ const empty = document.getElementById("empty");
 let videosGlobal = [];
 
 // =========================
-// LOAD VIDEOS
+// LOAD
 // =========================
 
 function loadVideos() {
@@ -18,32 +18,50 @@ function loadVideos() {
 
     empty.style.display = "none";
 
-    // agrupar TS
     const grouped = {};
 
     videos.forEach(v => {
 
+      // TS agrupado
       if (v.type === "ts") {
         const base = v.url.split("segment_")[0];
 
         if (!grouped[base]) {
           grouped[base] = {
             url: v.url,
-            realType: "ts-group",
-            label: "Vídeo Completo"
+            type: "ts-group",
+            label: "Vídeo Completo (TS)"
           };
         }
 
-      } else {
+      }
+
+      // M3U8
+      else if (v.type === "hls") {
         grouped[v.url] = {
           ...v,
-          realType: v.type
+          label: "Vídeo Completo (M3U8)"
+        };
+      }
+
+      // MP4
+      else if (v.type === "mp4") {
+        grouped[v.url] = {
+          ...v,
+          label: "Vídeo Completo (MP4)"
         };
       }
 
     });
 
     const finalList = Object.values(grouped);
+
+    // PRIORIDADE
+    finalList.sort((a, b) => {
+      const order = { mp4: 1, hls: 2, "ts-group": 3 };
+      return order[a.type] - order[b.type];
+    });
+
     videosGlobal = finalList;
 
     render(finalList);
@@ -67,17 +85,31 @@ function render(videos) {
       <div class="thumb">▶</div>
 
       <div class="info">
-        <div class="name">${video.label || "Video detectado"}</div>
+        <div class="name">${video.label}</div>
         <div class="meta">
-          <span class="tag">${video.realType}</span>
+          <span class="tag">${video.type}</span>
         </div>
       </div>
 
-      <button class="download">⬇ Baixar</button>
+      <button class="download" id="btn-${index}">
+        ⬇ Baixar
+      </button>
     `;
 
     list.appendChild(card);
+
+    document.getElementById(`btn-${index}`).onclick = () => {
+      baixar(video);
+    };
   });
+}
+
+// =========================
+// DOWNLOAD
+// =========================
+
+function baixar(video) {
+  alert("Download ainda via backend\nTipo: " + video.type);
 }
 
 // =========================
@@ -91,7 +123,7 @@ document.getElementById("reload").onclick = async () => {
   await chrome.runtime.sendMessage("clearVideos");
 
   list.innerHTML = "";
-  empty.innerHTML = "🔄 Recarregue a página e dê play no vídeo";
+  empty.innerHTML = "🔄 Recarregue e dê play no vídeo";
   empty.style.display = "block";
 
   chrome.tabs.reload(tab.id);
@@ -100,4 +132,4 @@ document.getElementById("reload").onclick = async () => {
 // =========================
 
 loadVideos();
-setInterval(loadVideos, 2000);
+setInterval(loadVideos, 1500);
