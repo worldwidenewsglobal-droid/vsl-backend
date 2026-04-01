@@ -4,44 +4,55 @@ const bar = document.getElementById("progress");
 const API = "https://vsl-backend.onrender.com";
 
 document.getElementById("baixar").addEventListener("click", () => {
-  status.textContent = "🔍 Buscando vídeo...";
 
-  chrome.runtime.sendMessage("getVideos", (videos) => {
+  status.textContent = "♻️ Preparando captura...";
 
-    // 🔥 filtra só TS
-    let tsList = videos.filter(v => v.includes(".ts"));
+  chrome.runtime.sendMessage("startCapture", () => {
 
-    // remove duplicados
-    tsList = [...new Set(tsList)];
+    status.textContent = "🔄 Recarregue a página do vídeo AGORA";
 
-    if (!tsList.length) {
-      status.textContent = "❌ Nenhum TS encontrado";
-      return;
-    }
+    // ⏱️ espera capturar os TS depois do reload
+    setTimeout(() => {
 
-    console.log("🎯 TOTAL TS:", tsList.length);
+      chrome.runtime.sendMessage("getVideos", (videos) => {
 
-    // 🔥 ordena pelos números (caso tenha)
-    tsList.sort((a, b) => {
-      const n1 = parseInt(a.match(/\d+/)?.[0] || 0);
-      const n2 = parseInt(b.match(/\d+/)?.[0] || 0);
-      return n1 - n2;
-    });
+        let tsList = videos.filter(v => v.includes(".ts"));
 
-    status.textContent = `🚀 Enviando ${tsList.length} partes...`;
+        // remove duplicados
+        tsList = [...new Set(tsList)];
 
-    fetch(`${API}/download`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ segments: tsList })
-    })
-    .then(() => acompanhar())
-    .catch(err => {
-      console.log("ERRO:", err);
-      status.textContent = "❌ Erro ao iniciar";
-    });
+        console.log("🎯 TOTAL TS:", tsList.length);
+
+        if (!tsList.length || tsList.length < 50) {
+          status.textContent = "⚠️ Poucos segmentos detectados, recarregue a página";
+          return;
+        }
+
+        // ordena por número
+        tsList.sort((a, b) => {
+          const n1 = parseInt(a.match(/\d+/)?.[0] || 0);
+          const n2 = parseInt(b.match(/\d+/)?.[0] || 0);
+          return n1 - n2;
+        });
+
+        status.textContent = `🚀 Enviando ${tsList.length} partes...`;
+
+        fetch(`${API}/download`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ segments: tsList })
+        })
+        .then(() => acompanhar())
+        .catch(err => {
+          console.log("ERRO:", err);
+          status.textContent = "❌ Erro ao iniciar";
+        });
+
+      });
+
+    }, 8000); // tempo pra carregar os TS
   });
 });
 

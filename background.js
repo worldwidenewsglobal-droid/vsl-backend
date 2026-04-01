@@ -1,5 +1,18 @@
 let videos = [];
 
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+
+  if (msg === "startCapture") {
+    console.log("♻️ Resetando captura...");
+    videos = [];
+    sendResponse("ok");
+  }
+
+  if (msg === "getVideos") {
+    sendResponse(videos);
+  }
+});
+
 chrome.webRequest.onCompleted.addListener(
   (details) => {
     if (details.url.includes(".ts")) {
@@ -8,9 +21,3 @@ chrome.webRequest.onCompleted.addListener(
   },
   { urls: ["<all_urls>"] }
 );
-
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg === "getVideos") {
-    sendResponse(videos);
-  }
-});
