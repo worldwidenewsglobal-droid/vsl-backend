@@ -10,7 +10,7 @@ function addVideo(tabId, video) {
   const exists = videosByTab[tabId].find(v => v.url === video.url);
   if (!exists) {
     videosByTab[tabId].push(video);
-    console.log("🎯", video);
+    console.log("🎯 ADD:", video);
   }
 }
 
@@ -26,26 +26,46 @@ chrome.webRequest.onCompleted.addListener(
 
     if (tabId < 0) return;
 
+    // =========================
     // 🎬 MP4
+    // =========================
+
     if (url.includes(".mp4")) {
       addVideo(tabId, { url, type: "mp4" });
+      return;
     }
 
-    // 🔥 M3U8 (filtrado)
+    // =========================
+    // 🔥 M3U8 (REAL)
+    // =========================
+
     if (
       url.includes(".m3u8") &&
       !url.includes("chunk") &&
       !url.includes("frag")
     ) {
       addVideo(tabId, { url, type: "hls" });
+      return;
     }
 
-    // ⚙ TS (VTurb)
+    // =========================
+    // ⚙ VTURB HARD (TS BASE)
+    // =========================
+
     if (
       url.includes(".ts") &&
       url.includes("segment")
     ) {
-      addVideo(tabId, { url, type: "ts" });
+
+      // 🔥 extrai base
+      const base = url.split("segment_")[0];
+
+      addVideo(tabId, {
+        url: base,
+        type: "ts-base"
+      });
+
+      return;
     }
 
   },

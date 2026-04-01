@@ -20,39 +20,38 @@ function loadVideos() {
 
     const grouped = {};
 
-    videos.forEach(v => {
+videos.forEach(v => {
 
-      // TS agrupado
-      if (v.type === "ts") {
-        const base = v.url.split("segment_")[0];
+  // TS BASE (VTURB)
+  if (v.type === "ts-base") {
 
-        if (!grouped[base]) {
-          grouped[base] = {
-            url: v.url,
-            type: "ts-group",
-            label: "Vídeo Completo (TS)"
-          };
-        }
+    if (!grouped[v.url]) {
+      grouped[v.url] = {
+        url: v.url + "segment_0.ts",
+        type: "ts-group",
+        label: "🎬 Vídeo Completo (VTurb TS)"
+      };
+    }
 
-      }
+  }
 
-      // M3U8
-      else if (v.type === "hls") {
-        grouped[v.url] = {
-          ...v,
-          label: "Vídeo Completo (M3U8)"
-        };
-      }
+  // M3U8
+  else if (v.type === "hls") {
+    grouped[v.url] = {
+      ...v,
+      label: "🎬 Vídeo Completo (M3U8)"
+    };
+  }
 
-      // MP4
-      else if (v.type === "mp4") {
-        grouped[v.url] = {
-          ...v,
-          label: "Vídeo Completo (MP4)"
-        };
-      }
+  // MP4
+  else if (v.type === "mp4") {
+    grouped[v.url] = {
+      ...v,
+      label: "🎬 Vídeo Completo (MP4)"
+    };
+  }
 
-    });
+});
 
     const finalList = Object.values(grouped);
 
