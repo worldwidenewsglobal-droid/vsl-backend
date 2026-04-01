@@ -52,16 +52,16 @@ function resetSegments() {
 }
 
 // =========================
-// 🚀 ROTA ÚNICA (FINAL)
+// 🚀 DOWNLOAD PRINCIPAL
 // =========================
 
 app.post("/download", async (req, res) => {
 
   const { url, type } = req.body;
 
-  if (!url) return res.status(400).send("URL não enviada");
+  console.log("🔥 RECEBEU:", req.body);
 
-  console.log("🚀 Iniciando download:", type);
+  if (!url) return res.status(400).send("URL não enviada");
 
   resetSegments();
 
@@ -70,7 +70,7 @@ app.post("/download", async (req, res) => {
   try {
 
     // =========================
-    // 🎯 TS (BRUTE FORCE)
+    // ⚡ TS SUPER RÁPIDO (PARALELO)
     // =========================
 
     if (type === "ts-group") {
@@ -80,33 +80,43 @@ app.post("/download", async (req, res) => {
       let current = 0;
       let fails = 0;
 
-      while (fails < 200) {
-        const tsUrl = base + `segment_${current}.ts`;
+      const CONCURRENCY = 20;
 
-        const ok = await downloadFile(tsUrl, `segments/${current}.ts`);
+      async function worker() {
+        while (fails < 50) {
+          const index = current++;
 
-        if (!ok) {
-          fails++;
-        } else {
-          fails = 0;
-          current++;
-          progress.downloaded++;
-          console.log("📥 TS", current);
+          const tsUrl = base + `segment_${index}.ts`;
+          const ok = await downloadFile(tsUrl, `segments/${index}.ts`);
+
+          if (!ok) {
+            fails++;
+          } else {
+            fails = 0;
+            progress.downloaded++;
+            console.log("📥 TS", index);
+          }
         }
       }
+
+      const workers = [];
+      for (let i = 0; i < CONCURRENCY; i++) {
+        workers.push(worker());
+      }
+
+      await Promise.all(workers);
 
       progress.total = progress.downloaded;
     }
 
     // =========================
-    // 🎬 HLS (M3U8)
+    // 🎬 HLS
     // =========================
 
     else if (type === "hls") {
 
       let content = await fetchText(url);
 
-      // master playlist
       if (content.includes("#EXT-X-STREAM-INF")) {
         const lines = content.split("\n");
 
@@ -133,18 +143,31 @@ app.post("/download", async (req, res) => {
 
       progress.total = segments.length;
 
-      for (let i = 0; i < segments.length; i++) {
-        const ok = await downloadFile(segments[i], `segments/${i}.ts`);
+      const CONCURRENCY = 20;
+      let current = 0;
 
-        if (ok) {
-          progress.downloaded++;
-          console.log("📥 HLS", i);
+      async function worker() {
+        while (current < segments.length) {
+          const i = current++;
+          const ok = await downloadFile(segments[i], `segments/${i}.ts`);
+
+          if (ok) {
+            progress.downloaded++;
+            console.log("📥 HLS", i);
+          }
         }
       }
+
+      const workers = [];
+      for (let i = 0; i < CONCURRENCY; i++) {
+        workers.push(worker());
+      }
+
+      await Promise.all(workers);
     }
 
     // =========================
-    // 📦 MP4 DIRETO
+    // 📦 MP4
     // =========================
 
     else {
@@ -171,10 +194,11 @@ app.post("/download", async (req, res) => {
 
     console.log("🎬 Montando vídeo...");
 
-    const lista = Array.from(
-      { length: progress.downloaded },
-      (_, i) => `file '${i}.ts'`
-    ).join("\n");
+    const files = fs.readdirSync("segments")
+      .filter(f => f.endsWith(".ts"))
+      .sort((a, b) => parseInt(a) - parseInt(b));
+
+    const lista = files.map(f => `file '${f}'`).join("\n");
 
     fs.writeFileSync("segments/lista.txt", lista);
 
