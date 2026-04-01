@@ -1,21 +1,17 @@
 let videos = [];
 
 chrome.webRequest.onCompleted.addListener(
-  async (details) => {
+  (details) => {
     const url = details.url;
 
     if (
       (
         url.includes(".m3u8") ||
         url.includes(".mp4") ||
-        url.includes(".ts") ||
-        url.includes(".webm")
+        url.includes(".ts")
       ) &&
       !url.includes("blob:") &&
-      !url.includes("data:") &&
-      !url.includes("init") &&
-      !url.includes("sprite") &&
-      !url.includes("preview")
+      !url.includes("data:")
     ) {
 
       if (!videos.find(v => v.url === url)) {
@@ -25,11 +21,6 @@ chrome.webRequest.onCompleted.addListener(
         });
 
         console.log("🎯 Detectado:", url);
-      }
-
-      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tabs[0]) {
-        chrome.sidePanel.open({ tabId: tabs[0].id });
       }
     }
   },
@@ -49,4 +40,10 @@ chrome.action.onClicked.addListener(async (tab) => {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg === "getVideos") sendResponse(videos);
+
+  if (msg === "clearVideos") {
+    videos = [];
+    console.log("🧹 Limpo");
+    sendResponse(true);
+  }
 });

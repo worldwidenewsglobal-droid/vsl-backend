@@ -17,14 +17,23 @@ body {
   margin-bottom: 10px;
 }
 
-.best {
-  width: 100%;
-  background: #3b82f6;
+button {
   border: none;
   padding: 10px;
   border-radius: 10px;
-  margin-bottom: 12px;
   cursor: pointer;
+}
+
+.best {
+  width: 100%;
+  background: #3b82f6;
+  margin-bottom: 10px;
+}
+
+.clear {
+  width: 100%;
+  background: #ef4444;
+  margin-bottom: 10px;
 }
 
 .card {
@@ -47,21 +56,16 @@ body {
   margin-left: 10px;
 }
 
-.name {
-  font-size: 13px;
-}
-
 .meta {
   font-size: 11px;
   opacity: 0.6;
 }
 
-button {
+.download {
   background: #22c55e;
-  border: none;
-  padding: 8px 10px;
-  border-radius: 20px;
-  cursor: pointer;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
 }
 
 .progress-bar {
@@ -82,7 +86,8 @@ button {
 
 <div class="header">🎥 VSL Downloader</div>
 
-<button id="best" class="best">⬇️ Baixar Melhor Qualidade</button>
+<button id="best" class="best">⬇️ Melhor Qualidade</button>
+<button id="clear" class="clear">🧹 Limpar</button>
 
 <div id="list"></div>
 

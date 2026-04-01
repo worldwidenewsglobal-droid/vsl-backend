@@ -1,9 +1,17 @@
 const list = document.getElementById("list");
 const bestBtn = document.getElementById("best");
+const clearBtn = document.getElementById("clear");
 
 const API = "https://vsl-backend.onrender.com";
 
 let videosGlobal = [];
+
+// =========================
+// 🔥 AUTO WAKE RENDER
+// =========================
+setInterval(() => {
+  fetch(`${API}/progress`).catch(() => {});
+}, 240000); // a cada 4 minutos
 
 // =========================
 // 🚀 PEGAR VIDEOS
@@ -17,10 +25,7 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
 
     if (v.type === "ts") {
 
-      const match = v.url.match(/(\d{3,4}p)/);
-      const quality = match ? match[1] : "720p";
-
-      const base = v.url.split("segment_")[0] + quality;
+      const base = v.url.split("segment_")[0];
 
       if (!grouped[base]) {
         grouped[base] = {
@@ -28,8 +33,7 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
           realType: "ts-group",
           url: v.url,
           count: 0,
-          quality,
-          label: "Vídeo Completo"
+          label: "🎥 Vídeo Completo"
         };
       }
 
@@ -38,16 +42,21 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
     } else {
       grouped[v.url] = {
         ...v,
-        realType: v.type,
-        quality: detectQuality(v.url)
+        realType: v.type
       };
     }
 
   });
 
-  // 🔥 remove lixo TS pequeno
+  // pega maior TS
+  const ts = Object.values(grouped)
+    .filter(v => v.realType === "ts-group")
+    .sort((a, b) => b.count - a.count)[0];
+
   const finalList = Object.values(grouped)
-    .filter(v => v.realType !== "ts-group" || v.count > 200);
+    .filter(v => v.realType !== "ts-group");
+
+  if (ts) finalList.unshift(ts);
 
   videosGlobal = finalList;
 
@@ -71,20 +80,15 @@ function render(videos) {
       <img class="thumb" src="assets/thumb.png">
 
       <div class="info">
-        <div class="name">
-          ${video.label || formatName(video.url)}
-        </div>
-
-        <div class="meta">
-          ${video.quality || ""} ${video.realType.toUpperCase()}
-        </div>
+        <div>${video.label || formatName(video.url)}</div>
+        <div class="meta">${video.realType}</div>
 
         <div class="progress-bar">
           <div class="progress" id="progress-${index}"></div>
         </div>
       </div>
 
-      <button id="btn-${index}">⬇️</button>
+      <button class="download" id="btn-${index}">⬇️</button>
     `;
 
     list.appendChild(card);
@@ -99,14 +103,21 @@ function render(videos) {
 
 bestBtn.onclick = () => {
 
-  const ts = videosGlobal
-    .filter(v => v.realType === "ts-group")
-    .sort((a, b) => b.count - a.count)[0];
-
+  const ts = videosGlobal.find(v => v.realType === "ts-group");
   if (ts) return baixar(ts, 0);
 
   const mp4 = videosGlobal.find(v => v.realType === "mp4");
   if (mp4) return baixar(mp4, 0);
+};
+
+// =========================
+// 🧹 LIMPAR
+// =========================
+
+clearBtn.onclick = () => {
+  chrome.runtime.sendMessage("clearVideos", () => {
+    list.innerHTML = "";
+  });
 };
 
 // =========================
@@ -115,7 +126,7 @@ bestBtn.onclick = () => {
 
 function baixar(video, index) {
 
-  fetch(`${API}/progress`); // acorda render
+  fetch(`${API}/progress`); // wake
 
   fetch(`${API}/download`, {
     method: "POST",
@@ -164,24 +175,12 @@ function acompanhar(index) {
       clearInterval(interval);
     }
 
-    if (data.status === "error") {
-      clearInterval(interval);
-    }
-
   }, 1000);
 }
 
 // =========================
 // HELPERS
 // =========================
-
-function detectQuality(url) {
-  if (url.includes("1080")) return "1080p";
-  if (url.includes("720")) return "720p";
-  if (url.includes("480")) return "480p";
-  if (url.includes("360")) return "360p";
-  return "";
-}
 
 function formatName(url) {
   return url.split("/").pop().replace(/\.(ts|m3u8|mp4)/, "");
