@@ -6,63 +6,69 @@
 <style>
 body {
   font-family: 'Segoe UI';
-  background: #0b0f17;
+  background: #111827;
   color: #fff;
-  padding: 14px;
+  padding: 12px;
+}
+
+.header {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 .card {
-  background: #121826;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1f2937;
   border-radius: 12px;
   padding: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .thumb {
-  width: 80px;
-  height: 55px;
-  border-radius: 6px;
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  object-fit: cover;
 }
 
-.info { flex: 1; }
-
-.tag {
-  font-size: 10px;
-  background: #1f2a3a;
-  padding: 3px 6px;
-  border-radius: 5px;
+.info {
+  flex: 1;
+  margin-left: 10px;
 }
 
-.quality {
-  background: #00ccff;
-  color: black;
+.name {
+  font-size: 13px;
+}
+
+.meta {
+  font-size: 11px;
+  opacity: 0.6;
 }
 
 button {
-  background: linear-gradient(90deg,#00ff88,#00ccff);
+  background: #22c55e;
   border: none;
-  padding: 6px;
-  border-radius: 6px;
+  padding: 8px 10px;
+  border-radius: 20px;
   cursor: pointer;
 }
 
-.progress-bar {
-  height: 4px;
-  background: #1a2333;
-  margin-top: 5px;
-}
-
-.progress {
-  height: 4px;
-  width: 0%;
-  background: linear-gradient(#00ff88,#00ccff);
+.best {
+  background: #3b82f6;
+  margin-bottom: 10px;
+  width: 100%;
 }
 </style>
 </head>
 
 <body>
+
+<div class="header">🎥 VSL Downloader</div>
+
+<button id="best" class="best">⬇️ Baixar Melhor Qualidade</button>
 
 <div id="list"></div>
 
