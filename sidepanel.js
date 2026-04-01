@@ -11,8 +11,6 @@ let videosGlobal = [];
 
 chrome.runtime.sendMessage("getVideos", (videos) => {
 
-  if (!videos || !videos.length) return;
-
   const grouped = {};
 
   videos.forEach(v => {
@@ -20,16 +18,18 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
     if (v.type === "ts") {
 
       const match = v.url.match(/(\d{3,4}p)/);
-      const quality = match ? match[1] : "unknown";
+      const quality = match ? match[1] : "720p";
 
       const base = v.url.split("segment_")[0] + quality;
 
       if (!grouped[base]) {
         grouped[base] = {
-          type: "ts-group",
+          type: "video",
+          realType: "ts-group",
           url: v.url,
           count: 0,
-          quality
+          quality,
+          label: "Vídeo Completo"
         };
       }
 
@@ -38,22 +38,20 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
     } else {
       grouped[v.url] = {
         ...v,
+        realType: v.type,
         quality: detectQuality(v.url)
       };
     }
 
   });
 
-  // 🔥 FILTRO: remove TS lixo
-  let finalList = Object.values(grouped)
-    .filter(v => v.type !== "ts-group" || v.count > 200);
-
-  // 🔥 ESCONDE TS (UX PREMIUM)
-  const visibleList = finalList.filter(v => v.type !== "ts-group");
+  // 🔥 remove lixo TS pequeno
+  const finalList = Object.values(grouped)
+    .filter(v => v.realType !== "ts-group" || v.count > 200);
 
   videosGlobal = finalList;
 
-  render(visibleList);
+  render(finalList);
 });
 
 // =========================
@@ -70,11 +68,20 @@ function render(videos) {
     card.className = "card";
 
     card.innerHTML = `
-      <img class="thumb" src="${getThumbnail(video)}">
+      <img class="thumb" src="assets/thumb.png">
 
       <div class="info">
-        <div class="name">${getTitle(video)}</div>
-        <div class="meta">${video.quality || ""} ${video.type.toUpperCase()}</div>
+        <div class="name">
+          ${video.label || formatName(video.url)}
+        </div>
+
+        <div class="meta">
+          ${video.quality || ""} ${video.realType.toUpperCase()}
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress" id="progress-${index}"></div>
+        </div>
       </div>
 
       <button id="btn-${index}">⬇️</button>
@@ -82,7 +89,7 @@ function render(videos) {
 
     list.appendChild(card);
 
-    document.getElementById(`btn-${index}`).onclick = () => baixar(video);
+    document.getElementById(`btn-${index}`).onclick = () => baixar(video, index);
   });
 }
 
@@ -92,37 +99,23 @@ function render(videos) {
 
 bestBtn.onclick = () => {
 
-  const best = escolherMelhor();
-
-  if (!best) return;
-
-  baixar(best);
-};
-
-function escolherMelhor() {
-
-  // prioridade: mp4 > hls > ts
-  const mp4 = videosGlobal.find(v => v.type === "mp4");
-  if (mp4) return mp4;
-
-  const hls = videosGlobal
-    .filter(v => v.type === "hls")
-    .sort((a, b) => (getQualityNum(b.quality) - getQualityNum(a.quality)))[0];
-
-  if (hls) return hls;
-
   const ts = videosGlobal
-    .filter(v => v.type === "ts-group")
+    .filter(v => v.realType === "ts-group")
     .sort((a, b) => b.count - a.count)[0];
 
-  return ts;
-}
+  if (ts) return baixar(ts, 0);
+
+  const mp4 = videosGlobal.find(v => v.realType === "mp4");
+  if (mp4) return baixar(mp4, 0);
+};
 
 // =========================
 // 🚀 DOWNLOAD
 // =========================
 
-function baixar(video) {
+function baixar(video, index) {
+
+  fetch(`${API}/progress`); // acorda render
 
   fetch(`${API}/download`, {
     method: "POST",
@@ -131,25 +124,37 @@ function baixar(video) {
     },
     body: JSON.stringify({
       url: video.url,
-      type: video.type
+      type: video.realType
     })
   });
 
-  acompanhar();
+  acompanhar(index);
 }
 
 // =========================
 // 📊 PROGRESS
 // =========================
 
-function acompanhar() {
+function acompanhar(index) {
+
+  const bar = document.getElementById(`progress-${index}`);
 
   const interval = setInterval(async () => {
 
     const res = await fetch(`${API}/progress`);
     const data = await res.json();
 
+    if (data.status === "downloading") {
+      bar.style.width = ((data.downloaded / data.total) * 100) + "%";
+    }
+
+    if (data.status === "processing") {
+      bar.style.width = "95%";
+    }
+
     if (data.status === "finished") {
+
+      bar.style.width = "100%";
 
       chrome.downloads.download({
         url: `${API}/video`,
@@ -159,11 +164,15 @@ function acompanhar() {
       clearInterval(interval);
     }
 
-  }, 1500);
+    if (data.status === "error") {
+      clearInterval(interval);
+    }
+
+  }, 1000);
 }
 
 // =========================
-// 🧠 HELPERS
+// HELPERS
 // =========================
 
 function detectQuality(url) {
@@ -174,14 +183,6 @@ function detectQuality(url) {
   return "";
 }
 
-function getQualityNum(q) {
-  return parseInt(q) || 0;
-}
-
-function getTitle(video) {
-  return video.url.split("/").pop().replace(/\.(ts|m3u8|mp4)/, "");
-}
-
-function getThumbnail() {
-  return "assets/thumb.png";
+function formatName(url) {
+  return url.split("/").pop().replace(/\.(ts|m3u8|mp4)/, "");
 }
