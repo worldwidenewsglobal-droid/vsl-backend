@@ -159,14 +159,18 @@ document.getElementById("clear").onclick = () => {
   });
 };
 
-document.getElementById("best").onclick = () => {
+const bestBtn = document.getElementById("best");
 
-  const ts = videosGlobal.find(v => v.realType === "ts-group");
-  if (ts) return baixar(ts, 0);
+if (bestBtn) {
+  bestBtn.onclick = () => {
 
-  const mp4 = videosGlobal.find(v => v.realType === "mp4");
-  if (mp4) return baixar(mp4, 0);
-};
+    const ts = videosGlobal.find(v => v.realType === "ts-group");
+    if (ts) return baixar(ts, 0);
+
+    const mp4 = videosGlobal.find(v => v.realType === "mp4");
+    if (mp4) return baixar(mp4, 0);
+  };
+}
 
 document.getElementById("reload").onclick = async () => {
 

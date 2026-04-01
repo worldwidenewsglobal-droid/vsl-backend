@@ -76,3 +76,11 @@ observer.observe(document.body, {
   childList: true,
   subtree: true
 });
+
+function safeSend(data) {
+  try {
+    chrome.runtime.sendMessage(data);
+  } catch (e) {
+    console.log("⚠️ contexto inválido, ignorando");
+  }
+};
