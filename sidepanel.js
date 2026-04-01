@@ -66,7 +66,7 @@ function render(videos) {
     card.className = "card";
 
     card.innerHTML = `
-      <div class="thumb"></div>
+      <div class="thumb">▶</div>
 
       <div class="info">
         <div class="name">${video.label || formatName(video.url)}</div>
@@ -81,7 +81,9 @@ function render(videos) {
         </div>
       </div>
 
-      <button class="download" id="btn-${index}">⬇</button>
+      <button class="download" id="btn-${index}">
+        ⬇ Baixar
+      </button>
     `;
 
     list.appendChild(card);
@@ -166,8 +168,34 @@ document.getElementById("best").onclick = () => {
   if (mp4) return baixar(mp4, 0);
 };
 
-document.getElementById("reload").onclick = () => {
-  chrome.tabs.reload();
+document.getElementById("reload").onclick = async () => {
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  // limpa lista antes
+  list.innerHTML = "";
+  empty.style.display = "none";
+
+  // recarrega a página
+  chrome.tabs.reload(tab.id);
+
+  // espera carregar
+  empty.innerHTML = "🔄 Carregando vídeos...";
+  empty.style.display = "block";
+  setTimeout(() => {
+
+    chrome.runtime.sendMessage("getVideos", (videos) => {
+
+      if (!videos || !videos.length) {
+        empty.style.display = "block";
+        return;
+      }
+
+      render(videos);
+
+    });
+
+  }, 2500); // tempo pra página carregar + detectar vídeos
 };
 
 // =========================

@@ -6,14 +6,14 @@ const API = "https://vsl-backend.onrender.com";
 chrome.runtime.sendMessage("getVideos", (videos) => {
 
   if (!videos || !videos.length) {
-  empty.innerHTML = `
-    😴<br><br>
-    Nenhum vídeo encontrado<br>
-    <small>Reproduza o vídeo</small>
-  `;
-  empty.style.display = "block";
-  return;
-}
+    empty.innerHTML = `
+      😴<br><br>
+      Nenhum vídeo encontrado<br>
+      <small>Reproduza o vídeo</small>
+    `;
+    empty.style.display = "block";
+    return;
+  }
 
   empty.style.display = "none";
 
@@ -24,7 +24,6 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
     card.className = "card";
 
     const title = video.url.split("/").pop().slice(0, 40);
-
     const quality = detectQuality(video.url);
 
     card.innerHTML = `
@@ -52,7 +51,7 @@ chrome.runtime.sendMessage("getVideos", (videos) => {
 });
 
 // =========================
-// 🎯 DETECTAR QUALIDADE
+// 🎯 QUALIDADE
 // =========================
 
 function detectQuality(url) {
@@ -82,25 +81,6 @@ function baixar(video, index) {
       url: video.url,
       type: video.type === "ts" ? "ts-group" : video.type
     })
-  }).then(() => acompanhar(index));
-}
-
-  const route =
-    video.type === "ts"
-      ? "download-ts"
-      : video.type === "hls"
-      ? "download-hls"
-      : null;
-
-  fetch(`${API}/${route}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body:
-      video.type === "ts"
-        ? JSON.stringify({ tsUrl: video.url })
-        : JSON.stringify({ m3u8Url: video.url })
   }).then(() => acompanhar(index));
 }
 
