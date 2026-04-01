@@ -172,30 +172,37 @@ document.getElementById("reload").onclick = async () => {
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  // limpa lista antes
-  list.innerHTML = "";
-  empty.style.display = "none";
+  // 🔥 limpa lista antiga
+  chrome.runtime.sendMessage("clearVideos");
 
-  // recarrega a página
+  list.innerHTML = "";
+  empty.innerHTML = "🔄 Recarregando...";
+  empty.style.display = "block";
+
+  // 🔥 recarrega página
   chrome.tabs.reload(tab.id);
 
-  // espera carregar
-  empty.innerHTML = "🔄 Carregando vídeos...";
-  empty.style.display = "block";
+  // 🔥 espera carregar + capturar requests
   setTimeout(() => {
 
     chrome.runtime.sendMessage("getVideos", (videos) => {
 
       if (!videos || !videos.length) {
+        empty.innerHTML = `
+          😴<br><br>
+          Nenhum vídeo encontrado<br>
+          <small>Dê play no vídeo</small>
+        `;
         empty.style.display = "block";
         return;
       }
 
+      empty.style.display = "none";
       render(videos);
 
     });
 
-  }, 2500); // tempo pra página carregar + detectar vídeos
+  }, 4000); // ⬅️ tempo REALISTA (VTurb demora)
 };
 
 // =========================
