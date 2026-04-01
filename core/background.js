@@ -11,9 +11,38 @@ function addVideo(tabId, video) {
 
   if (!exists) {
     videosByTab[tabId].push(video);
-    console.log("🎯 VIDEO:", video);
+    console.log("🎯", video.url);
   }
 }
+
+// =========================
+// 🔥 CAPTURA REAL (IGUAL PUPPETEER)
+// =========================
+
+chrome.webRequest.onCompleted.addListener(
+  (details) => {
+
+    const tabId = details.tabId;
+    const url = details.url;
+
+    if (tabId < 0) return;
+
+    // 🔥 FILTRO VTURB
+    if (
+      url.includes(".ts") ||
+      url.includes(".m3u8")
+    ) {
+
+      addVideo(tabId, {
+        url,
+        type: url.includes(".m3u8") ? "hls" : "ts"
+      });
+
+    }
+
+  },
+  { urls: ["<all_urls>"] }
+);
 
 // =========================
 // MESSAGES
@@ -22,11 +51,8 @@ function addVideo(tabId, video) {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   const tabId = sender.tab?.id;
-  if (!tabId) return;
 
-  if (msg.type === "VIDEO_FOUND") {
-    addVideo(tabId, msg.video);
-  }
+  if (!tabId) return;
 
   if (msg === "getVideos") {
     sendResponse(videosByTab[tabId] || []);

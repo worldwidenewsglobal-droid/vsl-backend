@@ -6,7 +6,8 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "sidePanel"
+    "sidePanel",
+    "webRequest"
   ],
 
   "host_permissions": ["<all_urls>"],
@@ -46,5 +47,7 @@
     "resources": ["players/*.js"],
     "matches": ["<all_urls>"]
   }
-]
+],
+
+
 }
