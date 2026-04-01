@@ -5,50 +5,54 @@
 
 <style>
 body {
-  font-family: 'Segoe UI';
-  background: #111827;
+  font-family: 'Segoe UI', sans-serif;
+  background: #0f172a;
   color: #fff;
-  padding: 12px;
+  padding: 10px;
 }
 
+/* HEADER */
 .header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.logo {
+  width: 28px;
+}
+
+.title {
   font-size: 16px;
   font-weight: bold;
-  margin-bottom: 10px;
 }
 
-button {
-  border: none;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
+.subtitle {
+  font-size: 12px;
+  opacity: 0.6;
 }
 
-.best {
-  width: 100%;
-  background: #3b82f6;
-  margin-bottom: 10px;
-}
-
-.clear {
-  width: 100%;
-  background: #ef4444;
-  margin-bottom: 10px;
-}
-
+/* CARD */
 .card {
   display: flex;
   align-items: center;
-  background: #1f2937;
-  border-radius: 12px;
+  background: #1e293b;
+  border-radius: 14px;
   padding: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.02);
 }
 
 .thumb {
-  width: 45px;
-  height: 45px;
-  border-radius: 8px;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  background: #111;
 }
 
 .info {
@@ -56,49 +60,125 @@ button {
   margin-left: 10px;
 }
 
-.meta {
-  font-size: 11px;
-  opacity: 0.6;
+.name {
+  font-size: 13px;
+  margin-bottom: 4px;
 }
 
+.meta {
+  display: flex;
+  gap: 6px;
+}
+
+.tag {
+  font-size: 10px;
+  background: #334155;
+  padding: 3px 6px;
+  border-radius: 6px;
+}
+
+.tag.quality {
+  background: #38bdf8;
+  color: #000;
+}
+
+/* BOTÃO */
 .download {
   background: #22c55e;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
 }
 
+/* PROGRESS */
 .progress-bar {
   height: 4px;
-  background: #1a2333;
+  background: #111;
   margin-top: 6px;
+  border-radius: 4px;
 }
 
 .progress {
   height: 4px;
   width: 0%;
   background: linear-gradient(#00ff88,#00ccff);
+  border-radius: 4px;
+}
+
+/* EMPTY */
+.empty {
+  text-align: center;
+  margin-top: 80px;
+}
+
+.empty h2 {
+  font-size: 18px;
+}
+
+.empty p {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.reload {
+  margin-top: 15px;
+  background: #22c55e;
+  border: none;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* TOP BUTTONS */
+.top-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.top-buttons button {
+  flex: 1;
+  border: none;
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.best {
+  background: #3b82f6;
+}
+
+.clear {
+  background: #ef4444;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">🎥 VSL Downloader</div>
+<div class="header">
+  <img src="icons/icon32.png" class="logo">
+  <div>
+    <div class="title">VSL Downloader</div>
+    <div class="subtitle">Seus vídeos - nosso trabalho!</div>
+  </div>
+</div>
 
-<button id="best" class="best">⬇️ Melhor Qualidade</button>
-<button id="clear" class="clear">🧹 Limpar</button>
+<div class="top-buttons">
+  <button id="best" class="best">⬇ Melhor qualidade</button>
+  <button id="clear" class="clear">🧹 Limpar</button>
+</div>
 
 <div id="list"></div>
 
-<div id="empty" style="display:none;text-align:center;margin-top:40px;opacity:0.7;">
-  <div style="font-size:40px;">😴</div>
-  <div style="margin-top:10px;font-size:14px;">
-    Nenhum vídeo encontrado
-  </div>
-  <div style="font-size:12px;opacity:0.6;margin-top:5px;">
-    Reproduza o vídeo e tente novamente
-  </div>
+<div id="empty" class="empty" style="display:none;">
+  <div style="font-size:50px;">😴</div>
+  <h2>Nenhum download encontrado!</h2>
+  <p>Reproduza o vídeo e tente novamente</p>
+  <button class="reload" id="reload">🔄 Recarregar página</button>
 </div>
 
 <script src="sidepanel.js"></script>
