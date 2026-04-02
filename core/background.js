@@ -25,5 +25,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     videos = [];
     sendResponse(true);
   }
+  chrome.action.onClicked.addListener(async (tab) => {
+  await chrome.sidePanel.open({ tabId: tab.id });
+})
 
 });
