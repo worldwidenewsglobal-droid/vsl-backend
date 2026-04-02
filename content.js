@@ -4,60 +4,53 @@
 
   let sentBase = false;
 
-  const observer = new PerformanceObserver((list) => {
+  try {
 
-    list.getEntries().forEach((entry) => {
+    const observer = new PerformanceObserver((list) => {
 
-      const url = entry.name;
+      list.getEntries().forEach((entry) => {
 
-      // =========================
-      // VTURB TS
-      // =========================
+        const url = entry.name;
 
-      if (url.includes(".ts") && url.includes("segment") && !sentBase) {
+        // VTURB TS
+        if (url.includes(".ts") && url.includes("segment") && !sentBase) {
 
-        const base = url.split("segment_")[0];
+          const base = url.split("segment_")[0];
 
-        console.log("🎯 VTURB BASE:", base);
+          console.log("🎯 VTURB BASE:", base);
 
-        chrome.runtime.sendMessage({
-          type: "VTURB_FOUND",
-          data: { base }
-        });
+          chrome.runtime.sendMessage({
+            type: "VTURB_FOUND",
+            data: { base }
+          });
 
-        sentBase = true;
-      }
+          sentBase = true;
+        }
 
-      // =========================
-      // M3U8
-      // =========================
+        // M3U8
+        if (url.includes(".m3u8")) {
+          chrome.runtime.sendMessage({
+            type: "M3U8_FOUND",
+            url
+          });
+        }
 
-      if (url.includes(".m3u8")) {
+        // MP4
+        if (url.includes(".mp4")) {
+          chrome.runtime.sendMessage({
+            type: "MP4_FOUND",
+            url
+          });
+        }
 
-        chrome.runtime.sendMessage({
-          type: "M3U8_FOUND",
-          url
-        });
-
-      }
-
-      // =========================
-      // MP4
-      // =========================
-
-      if (url.includes(".mp4")) {
-
-        chrome.runtime.sendMessage({
-          type: "MP4_FOUND",
-          url
-        });
-
-      }
+      });
 
     });
 
-  });
+    observer.observe({ entryTypes: ["resource"] });
 
-  observer.observe({ entryTypes: ["resource"] });
+  } catch (e) {
+    console.log("❌ ERRO DETECTOR:", e);
+  }
 
 })();

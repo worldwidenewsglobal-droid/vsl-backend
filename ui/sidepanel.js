@@ -3,13 +3,11 @@ const API = "https://SEU-RENDER.onrender.com";
 const list = document.getElementById("list");
 const empty = document.getElementById("empty");
 
-// =========================
-// LOAD
-// =========================
-
 function loadVideos() {
 
   chrome.runtime.sendMessage("getVideos", (videos) => {
+
+    console.log("📦 VIDEOS:", videos);
 
     if (!videos || !videos.length) {
       empty.style.display = "block";
@@ -19,36 +17,29 @@ function loadVideos() {
 
     empty.style.display = "none";
 
-    render(videos);
+    list.innerHTML = "";
+
+    videos.forEach((video) => {
+
+      const el = document.createElement("div");
+
+      el.innerHTML = `
+        <div style="margin-bottom:10px;">
+          <b>${video.type}</b><br/>
+          <small>${video.url}</small><br/>
+          <button>Baixar</button>
+        </div>
+      `;
+
+      el.querySelector("button").onclick = () => baixar(video);
+
+      list.appendChild(el);
+    });
+
   });
+
 }
 
-// =========================
-// RENDER
-// =========================
-
-function render(videos) {
-
-  list.innerHTML = "";
-
-  videos.forEach((video) => {
-
-    const el = document.createElement("div");
-    el.className = "card";
-
-    el.innerHTML = `
-      <div>${video.type.toUpperCase()}</div>
-      <button>Baixar</button>
-    `;
-
-    el.querySelector("button").onclick = () => baixar(video);
-
-    list.appendChild(el);
-  });
-}
-
-// =========================
-// DOWNLOAD
 // =========================
 
 function baixar(video) {
@@ -58,17 +49,12 @@ function baixar(video) {
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      url: video.url,
-      type: video.type
-    })
+    body: JSON.stringify(video)
   });
 
   acompanhar();
 }
 
-// =========================
-// PROGRESS
 // =========================
 
 function acompanhar() {
