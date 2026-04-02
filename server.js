@@ -214,7 +214,10 @@ app.get("/progress", (req, res) => res.json(progress));
 app.get("/video", (req, res) => {
   const file = path.join(__dirname, "video.mp4");
   if (!fs.existsSync(file)) return res.status(404).send("nao pronto");
-  res.download(file);
+  res.setHeader("Content-Disposition", "attachment; filename=video.mp4");
+  res.setHeader("Content-Type", "video/mp4");
+
+res.sendFile(file);
 });
 
 app.listen(PORT, () => console.log("🔥 SERVER TURBO RODANDO"));

@@ -73,10 +73,11 @@ function acompanhar() {
 
     if (data.status === "finished") {
 
-      chrome.downloads.download({
-        url: `${API}/video`,
-        filename: "video.mp4"
-      });
+      const a = document.createElement("a");
+        a.href = `${API}/video`;
+        a.download = "video.mp4";
+        a.target = "_blank";
+        a.click();
 
       clearInterval(interval);
     }
