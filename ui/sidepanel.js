@@ -1,4 +1,4 @@
-const API = "https://SEU-RENDER.onrender.com";
+const API = "https://vsl-backend.onrender.com";
 
 const list = document.getElementById("list");
 
