@@ -1,5 +1,3 @@
-// 🔥 SERVER FINAL TURBO
-
 const express = require("express");
 const fs = require("fs");
 const https = require("https");
@@ -26,14 +24,12 @@ let progress = {
 function downloadFile(url, filePath) {
   return new Promise((resolve) => {
 
-    const options = {
+    https.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0",
         "Referer": url
       }
-    };
-
-    https.get(url, options, (res) => {
+    }, (res) => {
 
       if (res.statusCode !== 200) return resolve(false);
 
@@ -90,7 +86,26 @@ app.post("/download", async (req, res) => {
   try {
 
     // =========================
-    // HLS (PARALELO)
+    // MP4 DIRETO
+    // =========================
+    if (type === "mp4") {
+
+      const ok = await downloadFile(url, "video.mp4");
+
+      if (!ok) {
+        progress.status = "error";
+        return res.status(500).send("erro mp4");
+      }
+
+      progress.total = 1;
+      progress.downloaded = 1;
+      progress.status = "finished";
+
+      return res.send("ok");
+    }
+
+    // =========================
+    // HLS (M3U8)
     // =========================
 
     if (type === "hls") {
@@ -99,9 +114,10 @@ app.post("/download", async (req, res) => {
 
         let content = await fetchText(url);
 
+        // 🔥 pega melhor qualidade automaticamente
         if (content.includes("#EXT-X-STREAM-INF")) {
-          const lines = content.split("\n");
 
+          const lines = content.split("\n");
           let best = null;
 
           for (let i = 0; i < lines.length; i++) {
@@ -111,10 +127,15 @@ app.post("/download", async (req, res) => {
               const next = lines[i + 1];
 
               if (!best || bw > best.bw) {
-                best = { bw, url: new URL(next, url).href };
+                best = {
+                  bw,
+                  url: new URL(next, url).href
+                };
               }
             }
           }
+
+          console.log("🎯 MELHOR QUALIDADE:", best.url);
 
           content = await fetchText(best.url);
         }
@@ -146,12 +167,12 @@ app.post("/download", async (req, res) => {
     }
 
     // =========================
-    // TS (RÁPIDO)
+    // TS FALLBACK (VTURB)
     // =========================
 
     if (type === "ts-group") {
 
-      const base = url.substring(0, url.lastIndexOf("/") + 1);
+      const base = url.endsWith("/") ? url : url + "/";
 
       let current = 0;
       let fails = 0;
@@ -196,12 +217,14 @@ app.post("/download", async (req, res) => {
         progress.status = "error";
         return;
       }
+
       progress.status = "finished";
     });
 
     res.send("ok");
 
   } catch (e) {
+    console.log("ERRO:", e);
     progress.status = "error";
     res.status(500).send("erro");
   }
@@ -213,11 +236,17 @@ app.get("/progress", (req, res) => res.json(progress));
 
 app.get("/video", (req, res) => {
   const file = path.join(__dirname, "video.mp4");
-  if (!fs.existsSync(file)) return res.status(404).send("nao pronto");
+
+  if (!fs.existsSync(file)) {
+    return res.status(404).send("nao pronto");
+  }
+
   res.setHeader("Content-Disposition", "attachment; filename=video.mp4");
   res.setHeader("Content-Type", "video/mp4");
 
-res.sendFile(file);
+  res.sendFile(file);
 });
+
+// =========================
 
 app.listen(PORT, () => console.log("🔥 SERVER TURBO RODANDO"));

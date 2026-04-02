@@ -23,7 +23,7 @@ function load() {
         <div>
           <b>${v.type}</b><br/>
           <small>${v.url}</small><br/>
-          <button style="margin-top:5px;">⬇ Baixar</button>
+          <button style="margin-top:5px;">Baixar</button>
         </div>
       `;
 
@@ -42,7 +42,10 @@ function load() {
 
 function baixar(video) {
 
-  console.log("🚀 BAIXANDO:", video);
+  let tipo = video.type;
+
+  // ajuste automático
+  if (tipo === "ts") tipo = "ts-group";
 
   fetch(`${API}/download`, {
     method: "POST",
@@ -51,7 +54,7 @@ function baixar(video) {
     },
     body: JSON.stringify({
       url: video.url,
-      type: "ts-group"
+      type: tipo
     })
   });
 
@@ -83,6 +86,70 @@ function acompanhar() {
     }
 
   }, 1500);
+}
+
+function render(videos) {
+
+  list.innerHTML = "";
+
+  videos.forEach((video) => {
+
+    const el = document.createElement("div");
+
+    el.style.cssText = `
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      color: white;
+      font-family: Arial;
+    `;
+
+    const typeColor = {
+      mp4: "#22c55e",
+      hls: "#3b82f6",
+      ts: "#f59e0b"
+    };
+
+    el.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        
+        <div>
+          <div style="font-weight:bold; font-size:14px;">
+            ${video.type.toUpperCase()}
+          </div>
+
+          <div style="
+            font-size:11px;
+            color:#94a3b8;
+            max-width:200px;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+          ">
+            ${video.url}
+          </div>
+        </div>
+
+        <button style="
+          background:${typeColor[video.type]};
+          border:none;
+          padding:8px 12px;
+          border-radius:8px;
+          color:white;
+          cursor:pointer;
+          font-weight:bold;
+        ">
+          Baixar
+        </button>
+
+      </div>
+    `;
+
+    el.querySelector("button").onclick = () => baixar(video);
+
+    list.appendChild(el);
+  });
 }
 
 // =========================
