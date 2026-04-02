@@ -1,6 +1,6 @@
 (function () {
 
-  console.log("🔥 DETECTOR LIMPO ATIVO");
+  console.log("🔥 DETECTOR ATIVO");
 
   const observer = new PerformanceObserver((list) => {
 
@@ -8,6 +8,7 @@
 
       const url = entry.name;
 
+      // TS (VTurb)
       if (url.includes(".ts") && url.includes("segment")) {
 
         const base = url.split("segment_")[0];
@@ -21,21 +22,31 @@
 
       }
 
+      // M3U8 (CORRETO AGORA)
+      if (url.includes(".m3u8")) {
+
+        console.log("🎯 M3U8:", url);
+
+        chrome.runtime.sendMessage({
+          type: "M3U8_FOUND",
+          url
+        });
+
+      }
+
+      // MP4
+      if (url.includes(".mp4")) {
+
+        chrome.runtime.sendMessage({
+          type: "MP4_FOUND",
+          url
+        });
+
+      }
+
     });
 
   });
-
-  // detectar m3u8 mesmo escondido
-if (url.includes(".m3u8")) {
-
-  console.log("🎯 M3U8 DETECTADO:", url);
-
-  chrome.runtime.sendMessage({
-    type: "M3U8_FOUND",
-    url
-  });
-
-}
 
   observer.observe({ entryTypes: ["resource"] });
 
