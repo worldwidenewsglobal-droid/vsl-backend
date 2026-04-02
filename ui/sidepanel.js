@@ -94,59 +94,40 @@ function render(videos) {
 
   videos.forEach((video) => {
 
+    // filtrar lixo
+    if (video.type === "hls" && !video.url.includes("main.m3u8")) return;
+
     const el = document.createElement("div");
 
-    el.style.cssText = `
-      background: #0f172a;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-      color: white;
-      font-family: Arial;
-    `;
+    el.className = "card";
 
-    const typeColor = {
-      mp4: "#22c55e",
-      hls: "#3b82f6",
-      ts: "#f59e0b"
-    };
+    const quality =
+      video.url.includes("720") ? "720p" :
+      video.url.includes("360") ? "360p" :
+      video.url.includes("180") ? "180p" :
+      video.type.toUpperCase();
 
     el.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="row">
         
-        <div>
-          <div style="font-weight:bold; font-size:14px;">
-            ${video.type.toUpperCase()}
-          </div>
+        <div class="left">
+          <div class="icon">▶</div>
 
-          <div style="
-            font-size:11px;
-            color:#94a3b8;
-            max-width:200px;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            white-space:nowrap;
-          ">
-            ${video.url}
+          <div>
+            <div class="title">Vídeo</div>
+            <div class="meta">
+              <span class="badge">${quality}</span>
+              <span>${video.type.toUpperCase()}</span>
+            </div>
           </div>
         </div>
 
-        <button style="
-          background:${typeColor[video.type]};
-          border:none;
-          padding:8px 12px;
-          border-radius:8px;
-          color:white;
-          cursor:pointer;
-          font-weight:bold;
-        ">
-          Baixar
-        </button>
+        <button class="btn">⬇</button>
 
       </div>
     `;
 
-    el.querySelector("button").onclick = () => baixar(video);
+    el.querySelector(".btn").onclick = () => baixar(video);
 
     list.appendChild(el);
   });

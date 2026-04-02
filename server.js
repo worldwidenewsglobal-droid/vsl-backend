@@ -27,7 +27,8 @@ function downloadFile(url, filePath) {
     https.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0",
-        "Referer": url
+        "Referer": url.split("/").slice(0, 3).join("/"),
+        "Origin": url.split("/").slice(0, 3).join("/")
       }
     }, (res) => {
 
@@ -46,11 +47,12 @@ function fetchText(url) {
   return new Promise((resolve, reject) => {
 
     https.get(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        "Referer": url
-      }
-    }, (res) => {
+  headers: {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "Referer": url.split("/").slice(0, 3).join("/"),
+    "Origin": url.split("/").slice(0, 3).join("/")
+  }
+  }, (res) => {
 
       let data = "";
       res.on("data", chunk => data += chunk);
