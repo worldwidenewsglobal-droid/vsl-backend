@@ -1,56 +1,30 @@
 (function () {
 
-  console.log("🔥 VSL DETECTOR ATIVO");
+  console.log("🔥 DETECTOR LIMPO ATIVO");
 
-  let sentBase = false;
+  const observer = new PerformanceObserver((list) => {
 
-  try {
+    list.getEntries().forEach((entry) => {
 
-    const observer = new PerformanceObserver((list) => {
+      const url = entry.name;
 
-      list.getEntries().forEach((entry) => {
+      if (url.includes(".ts") && url.includes("segment")) {
 
-        const url = entry.name;
+        const base = url.split("segment_")[0];
 
-        // VTURB TS
-        if (url.includes(".ts") && url.includes("segment") && !sentBase) {
+        console.log("🎯 BASE DETECTADA:", base);
 
-          const base = url.split("segment_")[0];
+        chrome.runtime.sendMessage({
+          type: "VIDEO_FOUND",
+          url: base
+        });
 
-          console.log("🎯 VTURB BASE:", base);
-
-          chrome.runtime.sendMessage({
-            type: "VTURB_FOUND",
-            data: { base }
-          });
-
-          sentBase = true;
-        }
-
-        // M3U8
-        if (url.includes(".m3u8")) {
-          chrome.runtime.sendMessage({
-            type: "M3U8_FOUND",
-            url
-          });
-        }
-
-        // MP4
-        if (url.includes(".mp4")) {
-          chrome.runtime.sendMessage({
-            type: "MP4_FOUND",
-            url
-          });
-        }
-
-      });
+      }
 
     });
 
-    observer.observe({ entryTypes: ["resource"] });
+  });
 
-  } catch (e) {
-    console.log("❌ ERRO DETECTOR:", e);
-  }
+  observer.observe({ entryTypes: ["resource"] });
 
 })();
