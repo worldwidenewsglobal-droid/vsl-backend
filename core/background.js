@@ -25,6 +25,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     videos = [];
     sendResponse(true);
   }
+
+  if (msg.type === "M3U8_FOUND") {
+
+  addVideo(tabId, {
+    url: msg.url,
+    type: "hls"
+  });
+
+}
   chrome.action.onClicked.addListener(async (tab) => {
   await chrome.sidePanel.open({ tabId: tab.id });
 })

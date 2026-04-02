@@ -25,6 +25,18 @@
 
   });
 
+  // detectar m3u8 mesmo escondido
+if (url.includes(".m3u8")) {
+
+  console.log("🎯 M3U8 DETECTADO:", url);
+
+  chrome.runtime.sendMessage({
+    type: "M3U8_FOUND",
+    url
+  });
+
+}
+
   observer.observe({ entryTypes: ["resource"] });
 
 })();
